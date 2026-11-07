@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flashcards · Spring Boot &amp; Java</title>
+<style>
+:root{
+  --spring:#6DB33F;
+  --spring-2:#8FD45E;
+  --spring-dark:#4A8A26;
+  --java:#F89820;
+  --java-2:#FFB454;
+  --java-blue:#5382A1;
+  --bg:#080B09;
+  --surface:rgba(255,255,255,.045);
+  --surface-2:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.10);
+  --text:#E9F1EA;
+  --muted:#8FA396;
+  --danger:#E5484D;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+
+html,body{min-height:100%}
+
+body{
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  padding:26px 16px 56px;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 10% -12%, rgba(109,179,63,.24), transparent 62%),
+    radial-gradient(820px 520px at 96% -6%, rgba(248,152,32,.18), transparent 62%),
+    radial-gradient(760px 620px at 50% 118%, rgba(83,130,161,.16), transparent 62%);
+}
+
+.app{position:relative;z-index:1;width:100%;max-width:840px}
+
+/* ---------- Topbar ---------- */
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.brand-mark{
+  width:46px;height:46px;flex:0 0 46px;border-radius:14px;
+  background:linear-gradient(135deg,var(--spring),var(--java));
+  display:grid;place-items:center;color:#08130a;
+  box-shadow:0 10px 28px -10px rgba(109,179,63,.95);
+}
+.brand-mark svg{width:24px;height:24px}
+.brand h1{font-size:1.18rem;font-weight:800;letter-spacing:-.02em}
+.brand p{
+  font-size:.68rem;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin-top:2px;
+}
+
+/* ---------- Botón Inicio (NUEVO) ---------- */
+.back-link{
+  margin-left:auto;
+  color:var(--muted);
+  text-decoration:none;
+  font-size:.82rem;
+  font-weight:700;
+  padding:9px 15px;
+  border-radius:10px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  transition:background .18s,color .18s,border-color .18s;
+  white-space:nowrap;
+}
+.back-link:hover{
+  background:var(--surface-2);
+  color:var(--text);
+  border-color:rgba(255,255,255,.22);
+}
+
+/* ---------- Paneles ---------- */
+.panel{
+  background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022));
+  border:1px solid var(--border);
+  border-radius:26px;
+  padding:28px;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:0 34px 70px -38px rgba(0,0,0,.95);
+}
+.panel h2{font-size:1.32rem;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:.9rem;line-height:1.6;margin-top:8px}
+.sub code{
+  background:rgba(109,179,63,.14);color:var(--spring-2);
+  padding:2px 6px;border-radius:6px;font-size:.82em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.sub b{color:var(--spring-2);font-weight:800}
+
+/* ---------- Dropzone ---------- */
+.dropzone{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;text-align:center;cursor:pointer;
+  margin-top:22px;padding:44px 22px;
+  border:2px dashed rgba(109,179,63,.34);
+  border-radius:20px;
+  background:rgba(109,179,63,.045);
+  transition:border-color .22s,background .22s,transform .18s;
+}
+.dropzone:hover,.dropzone.drag{
+  border-color:var(--spring);
+  background:rgba(109,179,63,.10);
+  transform:translateY(-2px);
+}
+.dz-icon{width:40px;height:40px;color:var(--spring);opacity:.9}
+.dz-title{font-weight:700;font-size:.98rem}
+.dz-sub{font-size:.82rem;color:var(--muted)}
+
+/* ---------- File info ---------- */
+.file-info{
+  margin-top:16px;display:flex;align-items:center;gap:12px;
+  padding:13px 16px;border-radius:14px;
+  background:rgba(109,179,63,.10);
+  border:1px solid rgba(109,179,63,.30);
+  font-size:.86rem;
+}
+.file-info.err{background:rgba(229,72,77,.10);border-color:rgba(229,72,77,.35);color:#FFB4B6}
+.file-info .fi-name{font-weight:700;word-break:break-all}
+.file-info .fi-meta{color:var(--muted);font-size:.78rem;margin-top:2px}
+.file-info .fi-count{
+  margin-left:auto;flex:0 0 auto;font-weight:800;color:var(--spring-2);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+
+.check{
+  display:flex;align-items:center;gap:10px;margin-top:18px;
+  font-size:.87rem;color:var(--muted);cursor:pointer;user-select:none;
+}
+.check input{
+  appearance:none;width:19px;height:19px;flex:0 0 19px;border-radius:6px;
+  border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.04);
+  cursor:pointer;position:relative;transition:.18s;
+}
+.check input:checked{background:var(--spring);border-color:var(--spring)}
+.check input:checked::after{
+  content:"";position:absolute;left:5px;top:1.5px;width:5px;height:10px;
+  border:solid #08130a;border-width:0 2.5px 2.5px 0;transform:rotate(42deg);
+}
+
+/* ---------- Botones ---------- */
+.btn{
+  font:inherit;font-weight:700;border:none;cursor:pointer;
+  border-radius:14px;padding:15px 22px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .14s,box-shadow .22s,background .22s,opacity .22s,border-color .22s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:scale(.977)}
+.btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}
+
+.btn-primary{
+  width:100%;margin-top:22px;
+  background:linear-gradient(135deg,var(--spring),var(--spring-dark));
+  color:#07130a;
+  box-shadow:0 16px 34px -14px rgba(109,179,63,.95);
+}
+.btn-primary:not(:disabled):hover{box-shadow:0 20px 40px -14px rgba(109,179,63,1)}
+
+.btn-ghost{
+  background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);
+}
+.btn-ghost:hover{background:rgba(255,255,255,.13)}
+.btn-ghost:disabled:hover{background:var(--surface-2)}
+
+.btn-ok{
+  background:linear-gradient(135deg,var(--spring),var(--spring-dark));
+  color:#07130a;box-shadow:0 14px 30px -14px rgba(109,179,63,.9);
+}
+.btn-bad{
+  background:linear-gradient(135deg,#E5484D,#B02A2E);
+  color:#fff;box-shadow:0 14px 30px -14px rgba(229,72,77,.9);
+}
+
+/* ---------- Mode selector ---------- */
+.mode-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px;
+}
+.mode-card{
+  font:inherit;cursor:pointer;text-align:left;
+  border:1px solid var(--border);border-radius:20px;
+  padding:22px 18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  color:var(--text);
+  display:flex;flex-direction:column;gap:8px;
+  transition:border-color .2s,transform .15s,background .2s,box-shadow .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mode-card:hover{
+  border-color:rgba(109,179,63,.5);
+  background:rgba(109,179,63,.07);
+  transform:translateY(-2px);
+  box-shadow:0 18px 36px -22px rgba(109,179,63,.8);
+}
+.mode-card:active{transform:scale(.985)}
+.mode-icon{
+  width:44px;height:44px;border-radius:13px;
+  display:grid;place-items:center;
+  background:rgba(109,179,63,.15);color:var(--spring-2);
+  margin-bottom:4px;
+}
+.mode-icon svg{width:22px;height:22px}
+.mode-card:nth-child(2) .mode-icon{
+  background:rgba(248,152,32,.15);color:var(--java-2);
+}
+.mode-name{font-size:1.1rem;font-weight:800;letter-spacing:-.01em}
+.mode-desc{font-size:.82rem;color:var(--muted);line-height:1.5}
+
+/* ---------- HUD (flashcards) ---------- */
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.hud-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:12px 15px;display:flex;flex-direction:column;gap:3px;
+}
+.hud-label{font-size:.63rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.hud-value{font-size:1.22rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.hud-value.ok{color:var(--spring-2)}
+.hud-value.bad{color:#FF8A8E}
+
+.progress{height:8px;border-radius:999px;background:rgba(255,255,255,.075);overflow:hidden;margin-bottom:20px}
+.progress-fill{
+  height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--spring),var(--java));
+  box-shadow:0 0 18px rgba(109,179,63,.75);
+  transition:width .5s cubic-bezier(.4,.05,.2,1);
+}
+
+/* ---------- Badge ---------- */
+.card-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.76rem;font-weight:700;letter-spacing:.02em;
+  padding:7px 15px;border-radius:999px;margin-bottom:14px;
+  background:rgba(248,152,32,.12);
+  border:1px solid rgba(248,152,32,.32);
+  color:var(--java-2);
+}
+.card-badge::before{
+  content:"";width:7px;height:7px;border-radius:50%;
+  background:currentColor;box-shadow:0 0 12px currentColor;
+}
+.card-badge.is-new{
+  background:rgba(109,179,63,.10);
+  border-color:rgba(109,179,63,.32);
+  color:var(--spring-2);
+}
+
+/* ---------- Tarjeta 3D ---------- */
+.card-scene{perspective:1800px;position:relative;margin-bottom:20px}
+.card-scene::after{
+  content:"";position:absolute;inset:0;border-radius:24px;
+  pointer-events:none;opacity:0;
+}
+.card-scene.flash-ok::after{background:rgba(109,179,63,.38);animation:fadeOut .45s ease forwards}
+.card-scene.flash-bad::after{background:rgba(229,72,77,.38);animation:fadeOut .45s ease forwards}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+
+.card{
+  display:grid;
+  min-height:65vh;
+  transform-style:preserve-3d;
+  transition:transform .62s cubic-bezier(.4,.08,.2,1);
+}
+.card.flipped{transform:rotateY(180deg)}
+
+.face{
+  grid-area:1/1;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;flex-direction:column;
+  min-height:100%;
+  max-height:85vh;
+  padding:26px;border-radius:24px;
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.022));
+  box-shadow:0 30px 60px -34px rgba(0,0,0,.95);
+  overflow:hidden;
+}
+.face.back{transform:rotateY(180deg)}
+
+.face-tag{
+  display:flex;align-items:center;gap:8px;
+  font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--spring);margin-bottom:15px;flex:0 0 auto;
+}
+.face-tag::before{
+  content:"";width:6px;height:6px;border-radius:50%;
+  background:currentColor;box-shadow:0 0 12px currentColor;
+}
+.face-tag.tag-java{color:var(--java)}
+
+.face-body{
+  flex:1;min-height:0;overflow-y:auto;
+  font-size:1.06rem;line-height:1.65;
+  white-space:pre-wrap;word-break:break-word;
+  padding-right:6px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(109,179,63,.5) transparent;
+}
+.face.front .face-body{font-size:1.16rem;font-weight:700;letter-spacing:-.012em;line-height:1.5}
+.face-body::-webkit-scrollbar{width:7px}
+.face-body::-webkit-scrollbar-thumb{background:rgba(109,179,63,.45);border-radius:99px}
+.face-body::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- Secciones de respuesta ---------- */
+.answer-section + .answer-section{
+  margin-top:18px;
+  padding-top:16px;
+  border-top:1px dashed rgba(255,255,255,.12);
+}
+.answer-label{
+  font-size:.66rem;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--java);
+  margin-bottom:8px;
+}
+.answer-text{
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+/* ---------- Repaso ---------- */
+.repaso-hud{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.repaso-hud span{
+  font-weight:800;font-variant-numeric:tabular-nums;
+  font-size:.95rem;color:var(--muted);white-space:nowrap;
+}
+.repaso-hud .progress{flex:1;margin:0}
+
+.repaso-card{
+  border-radius:24px;
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+  box-shadow:0 30px 60px -34px rgba(0,0,0,.95);
+  padding:26px;
+  margin-bottom:18px;
+  display:flex;flex-direction:column;gap:18px;
+  min-height:65vh;
+  max-height:85vh;
+  overflow:hidden;
+}
+.repaso-block{display:flex;flex-direction:column;gap:8px;min-height:0}
+.repaso-block .face-tag{margin-bottom:0}
+.repaso-block:first-child{flex:0 0 auto}
+.repaso-block:last-child{flex:1 1 0;min-height:0}
+
+.repaso-question, .repaso-answer{
+  font-size:1.02rem;line-height:1.6;
+  white-space:pre-wrap;word-break:break-word;
+  overflow-y:auto;padding-right:6px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(109,179,63,.5) transparent;
+}
+.repaso-question{
+  font-weight:700;font-size:1.1rem;
+  max-height:25vh;
+  flex:0 0 auto;
+}
+.repaso-answer{flex:1;min-height:0}
+
+.repaso-divider{height:1px;background:var(--border);flex:0 0 auto}
+
+/* ---------- Acciones ---------- */
+.actions{display:flex;gap:12px}
+.actions .btn{flex:1}
+
+.hint{
+  text-align:center;font-size:.75rem;color:var(--muted);
+  margin-top:16px;letter-spacing:.02em;
+}
+.hint kbd{
+  background:rgba(255,255,255,.09);border:1px solid var(--border);
+  border-radius:5px;padding:1px 6px;font-family:inherit;font-size:.92em;font-weight:700;
+}
+
+/* ---------- Pantalla final ---------- */
+.done-panel{text-align:center}
+.done-icon{
+  width:74px;height:74px;margin:4px auto 20px;border-radius:22px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--spring),var(--java));
+  color:#07130a;box-shadow:0 20px 44px -16px rgba(109,179,63,.95);
+}
+.done-icon svg{width:36px;height:36px}
+.done-stats{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+  margin:24px 0 6px;
+}
+.done-stat{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:16px;
+}
+.done-stat span{display:block;font-size:.64rem;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.done-stat strong{font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}
+.done-actions{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.done-actions .btn-primary{margin-top:0}
+
+/* ---------- Responsive ---------- */
+@media (max-width:600px){
+  body{padding:18px 12px 44px}
+  .panel{padding:22px 18px;border-radius:22px}
+  .mode-grid{grid-template-columns:1fr}
+  .card{min-height:60vh;}
+  .face{padding:20px;max-height:80vh}
+  .face.front .face-body{font-size:1.06rem}
+  .face-body{font-size:.98rem}
+  .hud{gap:8px}
+  .hud-item{padding:10px 11px}
+  .hud-value{font-size:1.05rem}
+  .dz-icon{width:34px;height:34px}
+  .dropzone{padding:34px 16px}
+  .actions{flex-direction:column-reverse}
+  .hint{font-size:.7rem}
+  .repaso-card{padding:20px;max-height:80vh;min-height:60vh;}
+  .repaso-question{font-size:1.02rem;max-height:20vh}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <h1>Flashcards</h1>
+      <p>Spring Boot · Java</p>
+    </div>
+    <!-- NUEVO: Botón volver al index -->
+    <a href="index.html" class="back-link">← Inicio</a>
+  </header>
+
+  <!-- ============ SUBIR ARCHIVO ============ -->
+  <section id="screen-upload" class="screen">
+    <div class="panel">
+      <h2>Cargar tus preguntas</h2>
+      <p class="sub">
+        Sube un archivo <code>.txt</code> con el formato
+        <code>pregunta:</code> / <code>respuesta teórica:</code> /
+        <code>explicación como lo aplique en el proyecto:</code> separados por <code>---</code>.
+        Las secciones <code>respuesta falsa 1</code>, <code>respuesta falsa 2</code>, etc. se ignoran automáticamente.
+      </p>
+
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".txt,text/plain" hidden />
+        <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span class="dz-title">Arrastra tu archivo aquí</span>
+        <span class="dz-sub">o haz clic para seleccionarlo</span>
+      </label>
+
+      <div class="file-info" id="fileInfo" hidden></div>
+
+      <label class="check">
+        <input type="checkbox" id="dedupe" />
+        Eliminar preguntas duplicadas
+      </label>
+
+      <button class="btn btn-primary" id="startBtn" disabled>Comenzar a estudiar</button>
+    </div>
+  </section>
+
+  <!-- ============ SELECCIÓN DE MODO ============ -->
+  <section id="screen-mode" class="screen" hidden>
+    <div class="panel">
+      <h2>Elige tu modo de estudio</h2>
+      <p class="sub">
+        Tienes <b id="modeCount">0</b> tarjeta(s) cargada(s). ¿Cómo quieres practicar?
+      </p>
+
+      <div class="mode-grid">
+        <button class="mode-card" id="modeRepaso">
+          <div class="mode-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="mode-name">Repaso</div>
+          <div class="mode-desc">
+            Mira cada pregunta con su respuesta al mismo tiempo, en orden aleatorio. Ideal para leer y asimilar.
+          </div>
+        </button>
+
+        <button class="mode-card" id="modeFlashcards">
+          <div class="mode-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/>
+            </svg>
+          </div>
+          <div class="mode-name">Flashcards</div>
+          <div class="mode-desc">
+            Intenta responder antes de voltear. Las que falles se repetirán 3 veces en orden aleatorio hasta dominarlas.
+          </div>
+        </button>
+      </div>
+
+      <button class="btn btn-ghost" id="backToUploadBtn" style="width:100%;margin-top:16px">
+        ← Volver a cargar archivo
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ MODO REPASO ============ -->
+  <section id="screen-repaso" class="screen" hidden>
+    <div class="repaso-hud">
+      <span id="repasoCounter">1 / 0</span>
+      <div class="progress"><div class="progress-fill" id="repasoProgress"></div></div>
+    </div>
+
+    <div class="repaso-card">
+      <div class="repaso-block">
+        <div class="face-tag">Pregunta</div>
+        <div class="repaso-question" id="repasoQuestion"></div>
+      </div>
+      <div class="repaso-divider"></div>
+      <div class="repaso-block">
+        <div class="face-tag tag-java">Respuesta</div>
+        <div class="repaso-answer" id="repasoAnswer"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" id="repasoPrevBtn">← Anterior</button>
+      <button class="btn btn-ok" id="repasoNextBtn">Siguiente →</button>
+    </div>
+
+    <p class="hint"><kbd>←</kbd> anterior · <kbd>→</kbd> siguiente</p>
+  </section>
+
+  <!-- ============ MODO FLASHCARDS ============ -->
+  <section id="screen-study" class="screen" hidden>
+    <div class="hud">
+      <div class="hud-item">
+        <span class="hud-label">Completadas</span>
+        <span class="hud-value" id="statDone">0/0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Aciertos</span>
+        <span class="hud-value ok" id="statOk">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Fallos</span>
+        <span class="hud-value bad" id="statBad">0</span>
+      </div>
+    </div>
+
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div id="cardBadge" class="card-badge is-new">Tarjeta nueva</div>
+
+    <div class="card-scene" id="cardScene">
+      <div class="card" id="card">
+        <div class="face front">
+          <div class="face-tag">Pregunta</div>
+          <div class="face-body" id="questionText"></div>
+        </div>
+        <div class="face back">
+          <div class="face-tag tag-java">Respuesta</div>
+          <div class="face-body" id="answerText"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions" id="revealActions">
+      <button class="btn btn-ghost" id="revealBtn">Mostrar respuesta</button>
+    </div>
+
+    <div class="actions" id="judgeActions" hidden>
+      <button class="btn btn-bad" id="wrongBtn">✕ No la sabía</button>
+      <button class="btn btn-ok" id="rightBtn">✓ La sabía</button>
+    </div>
+
+    <p class="hint">
+      <kbd>Espacio</kbd> voltear · <kbd>←</kbd> no la sabía · <kbd>→</kbd> la sabía
+    </p>
+  </section>
+
+  <!-- ============ FIN ============ -->
+  <section id="screen-done" class="screen" hidden>
+    <div class="panel done-panel">
+      <div class="done-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      </div>
+      <h2>¡Sesión completada!</h2>
+      <p class="sub" id="doneSubtitle">Has dominado todas las tarjetas.</p>
+
+      <div class="done-stats" id="doneStats"></div>
+
+      <div class="done-actions">
+        <button class="btn btn-primary" id="restartBtn">Estudiar de nuevo</button>
+        <button class="btn btn-ghost" id="newFileBtn">Cargar otro archivo</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+
+  const screenUpload = $('screen-upload');
+  const screenMode   = $('screen-mode');
+  const screenStudy  = $('screen-study');
+  const screenRepaso = $('screen-repaso');
+  const screenDone   = $('screen-done');
+
+  const dropzone   = $('dropzone');
+  const fileInput  = $('fileInput');
+  const fileInfo   = $('fileInfo');
+  const startBtn   = $('startBtn');
+  const dedupeChk  = $('dedupe');
+
+  const modeCount      = $('modeCount');
+  const modeRepasoBtn  = $('modeRepaso');
+  const modeFlashBtn   = $('modeFlashcards');
+  const backToUploadBtn = $('backToUploadBtn');
+
+  const repasoCounter  = $('repasoCounter');
+  const repasoProgress = $('repasoProgress');
+  const repasoQuestion = $('repasoQuestion');
+  const repasoAnswer   = $('repasoAnswer');
+  const repasoPrevBtn  = $('repasoPrevBtn');
+  const repasoNextBtn  = $('repasoNextBtn');
+
+  const cardEl      = $('card');
+  const cardScene   = $('cardScene');
+  const questionEl  = $('questionText');
+  const answerEl    = $('answerText');
+  const badgeEl     = $('cardBadge');
+
+  const revealActions = $('revealActions');
+  const judgeActions  = $('judgeActions');
+  const revealBtn     = $('revealBtn');
+  const wrongBtn      = $('wrongBtn');
+  const rightBtn      = $('rightBtn');
+
+  const statDone     = $('statDone');
+  const statOk       = $('statOk');
+  const statBad      = $('statBad');
+  const progressFill = $('progressFill');
+
+  const doneSubtitle = $('doneSubtitle');
+  const doneStats    = $('doneStats');
+  const restartBtn   = $('restartBtn');
+  const newFileBtn   = $('newFileBtn');
+
+  const S = {
+    parsed: [],
+    mode: null,
+    startTime: 0,
+    cards: [],
+    queue: [],
+    current: null,
+    revealed: false,
+    locked: false,
+    ok: 0,
+    bad: 0,
+    completed: 0,
+    repasoCards: [],
+    repasoIndex: 0
+  };
+
+  const REQUIRED_CORRECT = 3;
+
+  const shuffle = (arr) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const showScreen = (name) => {
+    screenUpload.hidden = name !== 'upload';
+    screenMode.hidden   = name !== 'mode';
+    screenStudy.hidden  = name !== 'study';
+    screenRepaso.hidden = name !== 'repaso';
+    screenDone.hidden   = name !== 'done';
+  };
+
+  const formatTime = (ms) => {
+    const total = Math.round(ms / 1000);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return m > 0 ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
+  };
+
+  const escapeHtml = (str) =>
+    String(str).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+
+  function renderAnswerHtml(card) {
+    let html = '';
+    if (card.theory) {
+      html +=
+        '<div class="answer-section">' +
+          '<div class="answer-label">Respuesta teórica</div>' +
+          '<div class="answer-text">' + escapeHtml(card.theory) + '</div>' +
+        '</div>';
+    }
+    if (card.explanation) {
+      html +=
+        '<div class="answer-section">' +
+          '<div class="answer-label">Explicación / aplicación en el proyecto</div>' +
+          '<div class="answer-text">' + escapeHtml(card.explanation) + '</div>' +
+        '</div>';
+    }
+    return html;
+  }
+
+  function parseCards(raw) {
+    const text = String(raw).replace(/\r\n?/g, '\n');
+    const blocks = text.split(/^[ \t]*-{3,}[ \t]*$/gm);
+    const cards = [];
+
+    const markerRe =
+      /^[ \t]*(pregunta|respuesta\s+falsa(?:\s+\d+)?|respuesta(?:\s+te[oó]rica)?|explicaci[oó]n(?:\s+[^:\n]+)?)[ \t]*:[ \t]*/gim;
+
+    for (const block of blocks) {
+      const matches = [];
+      let m;
+      markerRe.lastIndex = 0;
+      while ((m = markerRe.exec(block)) !== null) {
+        const label = m[1].toLowerCase();
+        const key = label.startsWith('pregunta')
+          ? 'question'
+          : label.startsWith('explicaci')
+            ? 'explanation'
+            : (label.startsWith('respuesta') && label.includes('falsa'))
+              ? 'false'
+              : 'theory';
+        matches.push({ key, start: m.index, contentStart: markerRe.lastIndex });
+      }
+      if (matches.length === 0) continue;
+
+      const fields = { question: '', theory: '', explanation: '' };
+      for (let i = 0; i < matches.length; i++) {
+        const end = i + 1 < matches.length ? matches[i + 1].start : block.length;
+        const content = block.slice(matches[i].contentStart, end).trim();
+        if (matches[i].key === 'false') continue;
+        if (!fields[matches[i].key]) fields[matches[i].key] = content;
+      }
+
+      if (fields.question && (fields.theory || fields.explanation)) {
+        cards.push({
+          question: fields.question,
+          theory: fields.theory,
+          explanation: fields.explanation
+        });
+      }
+    }
+    return cards;
+  }
+
+  async function loadFile(file) {
+    if (!file) return;
+
+    if (!/\.txt$/i.test(file.name) && file.type && !file.type.startsWith('text/')) {
+      fileInfo.hidden = false;
+      fileInfo.className = 'file-info err';
+      fileInfo.textContent = 'El archivo debe ser un .txt de texto plano.';
+      startBtn.disabled = true;
+      S.parsed = [];
+      return;
+    }
+
+    let content = '';
+    try {
+      content = await file.text();
+    } catch (e) {
+      fileInfo.hidden = false;
+      fileInfo.className = 'file-info err';
+      fileInfo.textContent = 'No se pudo leer el archivo.';
+      startBtn.disabled = true;
+      return;
+    }
+
+    const cards = parseCards(content);
+    S.parsed = cards;
+
+    fileInfo.hidden = false;
+
+    if (cards.length === 0) {
+      fileInfo.className = 'file-info err';
+      fileInfo.innerHTML =
+        '<div><div class="fi-name">' + escapeHtml(file.name) + '</div>' +
+        '<div class="fi-meta">No se encontró ninguna pareja válida <b>pregunta:</b> / <b>respuesta:</b></div></div>';
+      startBtn.disabled = true;
+      return;
+    }
+
+    const sizeKb = Math.max(1, Math.round(file.size / 1024));
+    fileInfo.className = 'file-info';
+    fileInfo.innerHTML =
+      '<div><div class="fi-name">' + escapeHtml(file.name) + '</div>' +
+      '<div class="fi-meta">' + sizeKb + ' KB</div></div>' +
+      '<div class="fi-count">' + cards.length + ' tarjeta' + (cards.length === 1 ? '' : 's') + '</div>';
+
+    startBtn.disabled = false;
+  }
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    loadFile(file);
+    fileInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.add('drag');
+    })
+  );
+
+  ['dragleave', 'drop'].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.remove('drag');
+    })
+  );
+
+  dropzone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  ['dragover', 'drop'].forEach((ev) =>
+    window.addEventListener(ev, (e) => e.preventDefault())
+  );
+
+  function buildCards() {
+    let cards = S.parsed.map((c) => ({
+      question: c.question,
+      theory: c.theory,
+      explanation: c.explanation
+    }));
+
+    if (dedupeChk.checked) {
+      const seen = new Set();
+      cards = cards.filter((c) => {
+        const key = c.question.trim().toLowerCase().replace(/\s+/g, ' ');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    return cards;
+  }
+
+  startBtn.addEventListener('click', () => {
+    const cards = buildCards();
+    if (!cards.length) return;
+    modeCount.textContent = cards.length;
+    showScreen('mode');
+  });
+
+  backToUploadBtn.addEventListener('click', () => showScreen('upload'));
+
+  modeRepasoBtn.addEventListener('click', () => startSession('repaso'));
+  modeFlashBtn.addEventListener('click',  () => startSession('flashcards'));
+
+  function startSession(mode) {
+    const base = buildCards();
+    if (!base.length) return;
+
+    S.mode = mode;
+    S.startTime = Date.now();
+
+    if (mode === 'repaso') {
+      S.repasoCards = shuffle(base.map((c) => ({
+        question: c.question,
+        theory: c.theory,
+        explanation: c.explanation
+      })));
+      S.repasoIndex = 0;
+      showScreen('repaso');
+      renderRepaso();
+    } else {
+      S.cards = base.map((c) => ({
+        question: c.question,
+        theory: c.theory,
+        explanation: c.explanation,
+        streak: 0,
+        failed: false,
+        done: false
+      }));
+      S.queue = shuffle(S.cards.map((_, i) => i));
+      S.current = null;
+      S.revealed = false;
+      S.locked = false;
+      S.ok = 0;
+      S.bad = 0;
+      S.completed = 0;
+      showScreen('study');
+      updateHud();
+      nextCard();
+    }
+  }
+
+  function renderRepaso() {
+    const card = S.repasoCards[S.repasoIndex];
+    repasoQuestion.textContent = card.question;
+    repasoAnswer.innerHTML = renderAnswerHtml(card);
+    repasoQuestion.scrollTop = 0;
+    repasoAnswer.scrollTop = 0;
+
+    const total = S.repasoCards.length;
+    repasoCounter.textContent = (S.repasoIndex + 1) + ' / ' + total;
+    repasoProgress.style.width = (((S.repasoIndex + 1) / total) * 100) + '%';
+
+    repasoPrevBtn.disabled = S.repasoIndex === 0;
+    repasoNextBtn.textContent =
+      S.repasoIndex === total - 1 ? 'Finalizar ✓' : 'Siguiente →';
+  }
+
+  repasoNextBtn.addEventListener('click', () => {
+    if (S.repasoIndex < S.repasoCards.length - 1) {
+      S.repasoIndex++;
+      renderRepaso();
+    } else {
+      finishSession();
+    }
+  });
+
+  repasoPrevBtn.addEventListener('click', () => {
+    if (S.repasoIndex > 0) {
+      S.repasoIndex--;
+      renderRepaso();
+    }
+  });
+
+  function requeue(idx) {
+    const q = S.queue;
+    if (q.length === 0) { q.push(idx); return; }
+    const pos = 1 + Math.floor(Math.random() * q.length);
+    q.splice(pos, 0, idx);
+  }
+
+  function nextCard() {
+    if (S.queue.length === 0) { finishSession(); return; }
+    S.current = S.queue.shift();
+    S.revealed = false;
+    S.locked = false;
+    renderCard();
+  }
+
+  function resetFlip() {
+    cardEl.style.transition = 'none';
+    cardEl.classList.remove('flipped');
+    void cardEl.offsetWidth;
+    cardEl.style.transition = '';
+  }
+
+  function renderCard() {
+    const card = S.cards[S.current];
+    resetFlip();
+    questionEl.textContent = card.question;
+    answerEl.innerHTML = renderAnswerHtml(card);
+    questionEl.scrollTop = 0;
+    answerEl.scrollTop = 0;
+
+    if (card.failed) {
+      badgeEl.className = 'card-badge';
+      badgeEl.textContent = 'Repaso · ' + card.streak + '/' + REQUIRED_CORRECT + ' aciertos seguidos';
+    } else {
+      badgeEl.className = 'card-badge is-new';
+      badgeEl.textContent = 'Tarjeta nueva';
+    }
+
+    revealActions.hidden = false;
+    judgeActions.hidden = true;
+    revealBtn.disabled = false;
+
+    updateHud();
+  }
+
+  function updateHud() {
+    statDone.textContent = S.completed + '/' + S.cards.length;
+    statOk.textContent = S.ok;
+    statBad.textContent = S.bad;
+    const pct = S.cards.length ? (S.completed / S.cards.length) * 100 : 0;
+    progressFill.style.width = pct + '%';
+  }
+
+  function reveal() {
+    if (S.revealed || S.current === null || S.locked) return;
+    S.revealed = true;
+    cardEl.classList.add('flipped');
+    revealActions.hidden = true;
+    judgeActions.hidden = false;
+    answerEl.scrollTop = 0;
+  }
+
+  revealBtn.addEventListener('click', reveal);
+  cardScene.addEventListener('click', () => { if (!S.revealed) reveal(); });
+
+  function flash(kind) {
+    cardScene.classList.remove('flash-ok', 'flash-bad');
+    void cardScene.offsetWidth;
+    cardScene.classList.add(kind === 'ok' ? 'flash-ok' : 'flash-bad');
+  }
+  cardScene.addEventListener('animationend', () => {
+    cardScene.classList.remove('flash-ok', 'flash-bad');
+  });
+
+  function answer(isCorrect) {
+    if (!S.revealed || S.locked || S.current === null) return;
+    S.locked = true;
+    const card = S.cards[S.current];
+    const need = card.failed ? REQUIRED_CORRECT : 1;
+
+    if (isCorrect) {
+      S.ok++;
+      card.streak++;
+      if (card.streak >= need) {
+        card.done = true;
+        S.completed++;
+      } else {
+        requeue(S.current);
+      }
+      flash('ok');
+    } else {
+      S.bad++;
+      card.failed = true;
+      card.streak = 0;
+      requeue(S.current);
+      flash('bad');
+    }
+
+    updateHud();
+    setTimeout(() => { S.locked = false; nextCard(); }, 400);
+  }
+
+  rightBtn.addEventListener('click', () => answer(true));
+  wrongBtn.addEventListener('click', () => answer(false));
+
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (!screenStudy.hidden) {
+      if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        if (!S.revealed) reveal();
+        return;
+      }
+      if (S.revealed) {
+        if (e.key === 'ArrowLeft' || e.key === '1') {
+          e.preventDefault(); answer(false);
+        } else if (e.key === 'ArrowRight' || e.key === '2') {
+          e.preventDefault(); answer(true);
+        }
+      }
+    } else if (!screenRepaso.hidden) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault(); repasoNextBtn.click();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault(); repasoPrevBtn.click();
+      }
+    }
+  });
+
+  function finishSession() {
+    const elapsed = Date.now() - S.startTime;
+
+    if (S.mode === 'repaso') {
+      doneSubtitle.textContent = 'Has repasado todas las tarjetas.';
+      doneStats.innerHTML =
+        '<div class="done-stat"><span>Tarjetas repasadas</span><strong>' + S.repasoCards.length + '</strong></div>' +
+        '<div class="done-stat"><span>Tiempo</span><strong>' + formatTime(elapsed) + '</strong></div>';
+    } else {
+      doneSubtitle.textContent = 'Has dominado todas las tarjetas.';
+      doneStats.innerHTML =
+        '<div class="done-stat"><span>Tarjetas</span><strong>' + S.cards.length + '</strong></div>' +
+        '<div class="done-stat"><span>Tiempo</span><strong>' + formatTime(elapsed) + '</strong></div>' +
+        '<div class="done-stat"><span>Aciertos</span><strong style="color:var(--spring-2)">' + S.ok + '</strong></div>' +
+        '<div class="done-stat"><span>Fallos</span><strong style="color:#FF8A8E">' + S.bad + '</strong></div>';
+    }
+
+    showScreen('done');
+  }
+
+  restartBtn.addEventListener('click', () => startSession(S.mode));
+
+  newFileBtn.addEventListener('click', () => {
+    showScreen('upload');
+    fileInfo.hidden = true;
+    startBtn.disabled = S.parsed.length === 0;
+  });
+
+  showScreen('upload');
+})();
+</script>
+</body>
+</html>
