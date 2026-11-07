@@ -66,7 +66,7 @@ body::before{
   text-transform:uppercase;color:var(--muted);margin-top:2px;
 }
 
-/* ---------- Botón Inicio (NUEVO) ---------- */
+/* ---------- Botón Inicio ---------- */
 .back-link{
   margin-left:auto;
   color:var(--muted);
@@ -336,6 +336,21 @@ body::before{
   word-break:break-word;
 }
 
+/* NUEVO: bloque Referencia (aparece justo después de la explicación) */
+.answer-section.answer-section-reference{
+  margin-top:18px;
+  padding:12px 14px;
+  border:1px dashed rgba(248,152,32,.45);
+  border-radius:10px;
+  background:rgba(248,152,32,.07);
+}
+.answer-section.answer-section-reference .answer-label{
+  color:var(--java-2);
+}
+.answer-section.answer-section-reference .answer-text{
+  color:var(--java-2);
+}
+
 /* ---------- Repaso ---------- */
 .repaso-hud{display:flex;align-items:center;gap:14px;margin-bottom:16px}
 .repaso-hud span{
@@ -448,7 +463,6 @@ body::before{
       <h1>Flashcards</h1>
       <p>Spring Boot · Java</p>
     </div>
-    <!-- NUEVO: Botón volver al index -->
     <a href="index.html" class="back-link">← Inicio</a>
   </header>
 
@@ -459,7 +473,8 @@ body::before{
       <p class="sub">
         Sube un archivo <code>.txt</code> con el formato
         <code>pregunta:</code> / <code>respuesta teórica:</code> /
-        <code>explicación como lo aplique en el proyecto:</code> separados por <code>---</code>.
+        <code>explicación como lo aplique en el proyecto:</code> /
+        <code>Referencia:</code> separados por <code>---</code>.
         Las secciones <code>respuesta falsa 1</code>, <code>respuesta falsa 2</code>, etc. se ignoran automáticamente.
       </p>
 
@@ -740,6 +755,14 @@ body::before{
           '<div class="answer-text">' + escapeHtml(card.explanation) + '</div>' +
         '</div>';
     }
+    // NUEVO: la Referencia se muestra justo después de la explicación
+    if (card.reference) {
+      html +=
+        '<div class="answer-section answer-section-reference">' +
+          '<div class="answer-label">Referencia</div>' +
+          '<div class="answer-text">' + escapeHtml(card.reference) + '</div>' +
+        '</div>';
+    }
     return html;
   }
 
@@ -749,7 +772,7 @@ body::before{
     const cards = [];
 
     const markerRe =
-      /^[ \t]*(pregunta|respuesta\s+falsa(?:\s+\d+)?|respuesta(?:\s+te[oó]rica)?|explicaci[oó]n(?:\s+[^:\n]+)?)[ \t]*:[ \t]*/gim;
+      /^[ \t]*(pregunta|respuesta\s+falsa(?:\s+\d+)?|respuesta(?:\s+te[oó]rica)?|explicaci[oó]n(?:\s+[^:\n]+)?|referencia)[ \t]*:[ \t]*/gim;
 
     for (const block of blocks) {
       const matches = [];
@@ -759,16 +782,18 @@ body::before{
         const label = m[1].toLowerCase();
         const key = label.startsWith('pregunta')
           ? 'question'
-          : label.startsWith('explicaci')
-            ? 'explanation'
-            : (label.startsWith('respuesta') && label.includes('falsa'))
-              ? 'false'
-              : 'theory';
+          : label.startsWith('referencia')
+            ? 'reference'
+            : label.startsWith('explicaci')
+              ? 'explanation'
+              : (label.startsWith('respuesta') && label.includes('falsa'))
+                ? 'false'
+                : 'theory';
         matches.push({ key, start: m.index, contentStart: markerRe.lastIndex });
       }
       if (matches.length === 0) continue;
 
-      const fields = { question: '', theory: '', explanation: '' };
+      const fields = { question: '', theory: '', explanation: '', reference: '' };
       for (let i = 0; i < matches.length; i++) {
         const end = i + 1 < matches.length ? matches[i + 1].start : block.length;
         const content = block.slice(matches[i].contentStart, end).trim();
@@ -780,7 +805,8 @@ body::before{
         cards.push({
           question: fields.question,
           theory: fields.theory,
-          explanation: fields.explanation
+          explanation: fields.explanation,
+          reference: fields.reference
         });
       }
     }
@@ -867,7 +893,8 @@ body::before{
     let cards = S.parsed.map((c) => ({
       question: c.question,
       theory: c.theory,
-      explanation: c.explanation
+      explanation: c.explanation,
+      reference: c.reference
     }));
 
     if (dedupeChk.checked) {
@@ -905,7 +932,8 @@ body::before{
       S.repasoCards = shuffle(base.map((c) => ({
         question: c.question,
         theory: c.theory,
-        explanation: c.explanation
+        explanation: c.explanation,
+        reference: c.reference
       })));
       S.repasoIndex = 0;
       showScreen('repaso');
@@ -915,6 +943,7 @@ body::before{
         question: c.question,
         theory: c.theory,
         explanation: c.explanation,
+        reference: c.reference,
         streak: 0,
         failed: false,
         done: false

@@ -13,8 +13,14 @@
 | 🎯 **Examen** | Práctica · Examen · Repaso | Preguntas tipo test con corrección instantánea (práctica), al final (examen) o navegable con respuesta visible (repaso). Resultados con % y revisión paginada. |
 | 🃏 **Flashcards** | Repaso · Flashcards | Tarjetas 3D con autoevaluación. Las que fallas se repiten (3 aciertos seguidos) hasta dominarlas. Atajos de teclado. |
 
+
+---
+---
+
 - 🎨 **UI dark theme** inspirada en los colores de Spring Boot y Java (glassmorphism, animaciones 3D).
+
 - 📄 **Banco de preguntas 100 % personalizable** en `.txt`.
+- 🔖 **Campo `Referencia:`** opcional: se muestra destacado justo **después de la explicación** en ambos sistemas (práctica, examen final, repaso y flashcards).
 - 📱 **Responsive**: móvil y escritorio.
 - ⚡ **Cero dependencias**: HTML + CSS + JS vanilla. Sin build, sin frameworks.
 - 🔀 **Opciones barajadas** en cada inicio para evitar memorizar posiciones.
@@ -54,6 +60,8 @@ respuesta teórica: Una interfaz define un contrato (solo firmas) y permite here
 
 explicación como lo aplique en el proyecto: Definí AerolineaService, ClienteService, VentaService, etc., como interfaces y su implementación en service/impl/*Impl.java. Esto permitió que los controllers dependan del contrato y no de la implementación, facilitando tests y aplicando el principio de inversión de dependencias (SOLID).
 
+Referencia: AerolineaService, AerolineaServiceImpl, VentaService.
+
 respuesta falsa 1: Una interfaz y una clase abstracta son casi lo mismo; la diferencia principal es que la clase abstracta permite herencia múltiple y la interfaz solo herencia simple.
 
 respuesta falsa 2: La interfaz sirve para definir atributos y constructores compartidos, mientras que la clase abstracta solo tiene métodos sin cuerpo.
@@ -67,6 +75,8 @@ pregunta: ¿Por qué usas record para los DTOs y no clases tradicionales?
 respuesta teórica: record (Java 16+) es un tipo inmutable que genera automáticamente constructor, equals, hashCode y toString. Ideal para DTOs que solo transportan datos y no deben mutarse.
 
 explicación como lo aplique en el proyecto: Todos los *Request y *Response (AerolineaRequest, VentaResponse, LoginResponse, PageResponse<T>, etc.) son record. Así los DTOs son inmutables por diseño, más legibles y con menos boilerplate.
+
+Referencia: AerolineaRequest, LoginResponse, PageResponse.
 
 respuesta falsa 1: Uso record porque es una clase mutable más liviana que una clase tradicional; genera setters automáticamente y permite cambiar los datos del DTO después de crearlo.
 
@@ -84,12 +94,15 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
 | `pregunta:` | ✅ Sí | Enunciado de la pregunta. |
 | `respuesta teórica:` | ✅ Sí | Respuesta correcta. En el examen se convierte en la opción correcta. |
 | `explicación como lo aplique en el proyecto:` | ❌ Opcional | Explicación adicional. Si se omite, se usa la respuesta teórica como explicación. También se acepta simplemente `explicación:`. |
+| `Referencia:` | ❌ Opcional | Referencia de dónde sale la respuesta (archivos, clases, documentación). Se muestra como bloque destacado **justo después de la explicación** en examen y flashcards. |
 | `respuesta falsa 1:` | ⚠️ Al menos 1 | Opciones incorrectas. Cuantas más añadas, más distractores tendrá la pregunta. |
 | `respuesta falsa 2:` | ❌ Opcional | Igual que la anterior. |
 | `respuesta falsa 3:` | ❌ Opcional | Igual que la anterior. |
 | `---` | ✅ Sí | Separador entre preguntas (una línea con 3 o más guiones). |
 
-> 💡 **Multilínea**: puedes escribir el contenido de cualquier campo en varias líneas. Las líneas que **no** empiecen por un marcador (`pregunta:`, `respuesta teórica:`, etc.) se añaden al campo anterior.
+> 💡 **Multilínea**: puedes escribir el contenido de cualquier campo en varias líneas. Las líneas que **no** empiecen por un marcador (`pregunta:`, `respuesta teórica:`, `Referencia:`, etc.) se añaden al campo anterior.
+>
+> 🔖 **Sobre `Referencia:`**: es un campo de **texto libre** (archivos, clases, URLs, documentación…). El orden en el archivo es libre, pero en pantalla siempre se renderiza **después de la explicación**, con un estilo visual diferenciado (borde discontinuo naranja).
 
 ---
 
@@ -109,6 +122,8 @@ Correcta: B
 
 Explicación: @SpringBootApplication combina @Configuration, @EnableAutoConfiguration y @ComponentScan en una sola anotación.
 
+Referencia: Clase principal ConfortTravelBackendApplication.
+
 ---
 ```
 
@@ -120,6 +135,7 @@ Explicación: @SpringBootApplication combina @Configuration, @EnableAutoConfigur
 | `A)` `B)` `C)` `D)` | ✅ Sí | Opciones (solo se admiten letras de la A a la D). |
 | `Correcta:` | ✅ Sí | Letra de la opción correcta (`A`, `B`, `C` o `D`). |
 | `Explicación:` | ❌ Opcional | Explicación mostrada tras responder. |
+| `Referencia:` | ❌ Opcional | Referencia mostrada justo después de la explicación. |
 | `---` | ✅ Sí | Separador entre preguntas. |
 
 ---
@@ -128,8 +144,8 @@ Explicación: @SpringBootApplication combina @Configuration, @EnableAutoConfigur
 
 | Formato | `examen.html` | `flashcards.html` |
 |---|---|---|
-| **Nuevo** (`pregunta:` / `respuesta teórica:` / `respuesta falsa N:`) | ✅ Sí | ✅ Sí |
-| **Clásico** (`Pregunta:` / `A)` … `D)` / `Correcta:`) | ✅ Sí | ❌ No |
+| **Nuevo** (`pregunta:` / `respuesta teórica:` / `respuesta falsa N:` / `Referencia:`) | ✅ Sí | ✅ Sí |
+| **Clásico** (`Pregunta:` / `A)` … `D)` / `Correcta:` / `Referencia:`) | ✅ Sí | ❌ No |
 
 > ⚠️ **Importante:** si vas a usar el mismo archivo para ambos sistemas, quédate con el **formato nuevo**. El clásico solo funciona en el examen.
 
@@ -139,7 +155,7 @@ Explicación: @SpringBootApplication combina @Configuration, @EnableAutoConfigur
 
 - **Codificación:** UTF-8 (para tildes, ñ y símbolos correctos).
 - **Separador:** una línea con `---` (3 o más guiones) entre preguntas. Sin `---` el parser puede unir bloques o perder preguntas.
-- **Mayúsculas / minúsculas:** los marcadores (`pregunta:`, `respuesta teórica:`, etc.) son **insensibles a mayúsculas**. `Pregunta:` y `pregunta:` funcionan igual.
+- **Mayúsculas / minúsculas:** los marcadores (`pregunta:`, `respuesta teórica:`, `Referencia:`, etc.) son **insensibles a mayúsculas**. `Pregunta:` y `pregunta:` funcionan igual.
 - **Espacios:** los espacios en blanco al inicio/final de cada línea se recortan. Puedes indentar sin miedo.
 - **Opciones barajadas:** no importa el orden en que pongas las respuestas; el sistema las mezcla en cada inicio.
 - **Extensión:** debe ser `.txt` (texto plano). Archivos `.md`, `.docx` o `.pdf` no son aceptados.
@@ -156,6 +172,8 @@ pregunta: ¿Qué es la inyección de dependencias?
 respuesta teórica: Un patrón donde un objeto recibe sus dependencias desde fuera en lugar de crearlas él mismo.
 
 explicación como lo aplique en el proyecto: Los controllers reciben los services por constructor, sin hacer new. Spring se encarga de inyectarlos.
+
+Referencia: AerolineaServiceImpl, VentaServiceImpl, @RequiredArgsConstructor.
 
 respuesta falsa 1: Un patrón donde cada clase crea sus propias instancias manualmente con new.
 

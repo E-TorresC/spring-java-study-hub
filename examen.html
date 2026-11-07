@@ -86,7 +86,7 @@
         ::-webkit-scrollbar-track { background: transparent; }
 
         /* ============================================================
-           BOTÓN VOLVER AL INICIO  (NUEVO)
+           BOTÓN VOLVER AL INICIO
            ============================================================ */
         .back-link {
             color: var(--muted);
@@ -117,7 +117,7 @@
             height: 100vh;
             padding: 20px;
             text-align: center;
-            position: relative;   /* ← NUEVO: para anclar el botón Inicio */
+            position: relative;
         }
 
         .setup-box {
@@ -551,6 +551,7 @@
             line-height: 1.6;
         }
 
+        /* Bloque explicación: sin borde superior para que quede pegado a la referencia */
         .feedback-explanation {
             margin-top: 15px;
             padding-top: 15px;
@@ -558,6 +559,22 @@
             font-size: 14px;
             line-height: 1.6;
             color: var(--muted);
+        }
+
+        /* Referencia: aparece justo después de la explicación */
+        .feedback-reference {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px dashed rgba(248,152,32,.45);
+            background: rgba(248,152,32,.07);
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--java-2);
+        }
+        .feedback-reference strong {
+            color: var(--java-2);
+            font-weight: 800;
         }
 
         .bottom-bar {
@@ -676,6 +693,22 @@
         .review-answer.correct   { color: var(--spring-2); }
         .review-answer.incorrect { color: var(--danger-text); }
 
+        /* Referencia en la revisión: justo después de la explicación */
+        .review-reference {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px dashed rgba(248,152,32,.45);
+            background: rgba(248,152,32,.07);
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: var(--java-2);
+        }
+        .review-reference strong {
+            color: var(--java-2);
+            font-weight: 800;
+        }
+
         /* ============================================================
            PAGINACIÓN
            ============================================================ */
@@ -757,7 +790,6 @@
 
     <!-- Pantalla de Inicio -->
     <div id="setup-screen">
-        <!-- NUEVO: Botón volver al index -->
         <a href="index.html" class="back-link"
            style="position:absolute; top:20px; left:20px;">← Inicio</a>
 
@@ -769,6 +801,7 @@
                     <strong>Formatos aceptados:</strong><br>
                     <code>pregunta:</code> / <code>respuesta teórica:</code> /
                     <code>explicación como lo aplique en el proyecto:</code> /
+                    <code>Referencia:</code> /
                     <code>respuesta falsa 1:</code> … <code>respuesta falsa 3:</code><br>
                     (también se admite el formato clásico <code>Pregunta:</code> /
                     <code>A)</code> … <code>D)</code> / <code>Correcta:</code> / <code>Explicación:</code>).
@@ -842,7 +875,6 @@
             <div class="pagination-controls" id="pagination-controls">
             </div>
 
-            <!-- NUEVO: Botón Volver al inicio junto a "Volver a empezar" -->
             <div style="text-align: center; margin-top: 30px; display: flex; gap: 12px;
                         justify-content: center; flex-wrap: wrap;">
                 <a href="index.html" class="back-link"
@@ -860,6 +892,8 @@ respuesta teórica: Una interfaz define un contrato (solo firmas) y permite here
 
 explicación como lo aplique en el proyecto: Definí AerolineaService, ClienteService, VentaService, etc., como interfaces y su implementación en service/impl/*Impl.java. Esto permitió que los controllers dependan del contrato y no de la implementación, facilitando tests (Mockito mockea la interfaz) y el principio de inversión de dependencias (SOLID).
 
+Referencia: AerolineaService, AerolineaServiceImpl, VentaService.
+
 respuesta falsa 1: Una interfaz y una clase abstracta son casi lo mismo; la diferencia principal es que la clase abstracta permite herencia múltiple y la interfaz solo herencia simple. Por eso usé interfaces para los servicios: así podía heredar de varias clases abstractas y reutilizar código.
 
 respuesta falsa 2: La interfaz sirve para definir atributos y constructores compartidos, mientras que la clase abstracta solo tiene métodos sin cuerpo. Usé interfaces en los servicios porque Spring solo puede inyectar interfaces y no clases concretas.
@@ -873,6 +907,8 @@ pregunta: ¿Por qué usas record para los DTOs y no clases tradicionales?
 respuesta teórica: record (Java 16+) es un tipo inmutable que genera automáticamente constructor, equals, hashCode y toString. Ideal para DTOs que solo transportan datos y no deben mutarse.
 
 explicación como lo aplique en el proyecto: Todos los *Request y *Response (AerolineaRequest, VentaResponse, LoginResponse, PageResponse<T>, etc.) son record. Así los DTOs son inmutables por diseño, más legibles y con menos boilerplate. Ejemplo: public record LoginResponse(String token, String type, Long userId, ...) {}. Los *FilterRequest también son records porque solo agrupan parámetros de búsqueda.
+
+Referencia: AerolineaRequest, LoginResponse, PageResponse.
 
 respuesta falsa 1: Uso record porque es una clase mutable más liviana que una clase tradicional; genera setters automáticamente y permite cambiar los datos del DTO después de crearlo, lo cual es cómodo para actualizar respuestas.
 
@@ -936,6 +972,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 question: '',
                 theory: '',
                 explanation: '',
+                reference: '',
                 falses: []
             };
 
@@ -945,6 +982,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 if (currentField === 'question')      data.question      += ' ' + extra;
                 else if (currentField === 'theory')    data.theory        += ' ' + extra;
                 else if (currentField === 'explanation') data.explanation += ' ' + extra;
+                else if (currentField === 'reference') data.reference    += ' ' + extra;
                 else if (currentField === 'false' && data.falses.length) {
                     data.falses[data.falses.length - 1] += ' ' + extra;
                 }
@@ -975,6 +1013,12 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                     return;
                 }
 
+                if ((m = line.match(/^referencia\s*:\s*(.*)$/i))) {
+                    currentField = 'reference';
+                    data.reference = m[1].trim();
+                    return;
+                }
+
                 if ((m = line.match(/^respuesta\s+falsa(?:\s*\d+)?\s*:\s*(.*)$/i))) {
                     currentField = 'false';
                     data.falses.push(m[1].trim());
@@ -997,6 +1041,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 question: data.question,
                 options: options,
                 explanation: data.explanation || data.theory,
+                reference: data.reference || '',
                 explanationLabel: 'Aplicación en el proyecto'
             };
         }
@@ -1006,6 +1051,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 question: '',
                 options: [],
                 explanation: '',
+                reference: '',
                 explanationLabel: 'Explicación'
             };
 
@@ -1035,6 +1081,9 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 } else if ((m = line.match(/^explicaci[oó]n\s*:\s*(.*)$/i))) {
                     currentField = 'explanation';
                     obj.explanation = m[1].trim();
+                } else if ((m = line.match(/^referencia\s*:\s*(.*)$/i))) {
+                    currentField = 'reference';
+                    obj.reference = m[1].trim();
                 } else {
                     if (currentField === 'question') {
                         obj.question += ' ' + line;
@@ -1042,6 +1091,8 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                         obj.options[obj.options.length - 1].text += ' ' + line;
                     } else if (currentField === 'explanation') {
                         obj.explanation += ' ' + line;
+                    } else if (currentField === 'reference') {
+                        obj.reference += ' ' + line;
                     }
                 }
             });
@@ -1212,6 +1263,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                     <div class="feedback-body">
                         <div id="feedback-correct-answer"></div>
                         <div class="feedback-explanation" id="feedback-explanation"></div>
+                        <div class="feedback-reference" id="feedback-reference" style="display:none;"></div>
                     </div>
                 </div>
             `;
@@ -1229,6 +1281,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 const title = document.getElementById('feedback-title');
                 const correctAnswerDiv = document.getElementById('feedback-correct-answer');
                 const explanationDiv = document.getElementById('feedback-explanation');
+                const referenceDiv = document.getElementById('feedback-reference');
 
                 const correctOpt = q.options.find(o => o.isCorrect);
 
@@ -1236,6 +1289,13 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                 title.textContent = 'Respuesta';
                 correctAnswerDiv.innerHTML = `<strong>${correctOpt ? correctOpt.text : ''}</strong>`;
                 explanationDiv.innerHTML = `<strong>${explanationLabel}</strong><br>${q.explanation}`;
+
+                if (q.reference && q.reference.trim()) {
+                    referenceDiv.style.display = 'block';
+                    referenceDiv.innerHTML = `<strong>Referencia:</strong> ${q.reference}`;
+                } else {
+                    referenceDiv.style.display = 'none';
+                }
 
                 selectBtn.style.display = 'none';
                 nextBtn.disabled = false;
@@ -1292,6 +1352,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
             const title = document.getElementById('feedback-title');
             const correctAnswerDiv = document.getElementById('feedback-correct-answer');
             const explanationDiv = document.getElementById('feedback-explanation');
+            const referenceDiv = document.getElementById('feedback-reference');
 
             container.style.display = 'block';
 
@@ -1306,6 +1367,13 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
             }
 
             explanationDiv.innerHTML = `<strong>${explanationLabel}</strong><br>${q.explanation}`;
+
+            if (q.reference && q.reference.trim()) {
+                referenceDiv.style.display = 'block';
+                referenceDiv.innerHTML = `<strong>Referencia:</strong> ${q.reference}`;
+            } else {
+                referenceDiv.style.display = 'none';
+            }
         }
 
         function nextQuestion() {
@@ -1396,12 +1464,18 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
                     </div>`;
                 }
 
+                // Referencia mostrada justo después de la explicación
+                const referenceHtml = (q.reference && q.reference.trim())
+                    ? `<div class="review-reference"><strong>Referencia:</strong> ${q.reference}</div>`
+                    : '';
+
                 div.innerHTML = `
                     <div class="review-question">Pregunta ${i + 1}: ${q.question}</div>
                     ${answerHtml}
                     <div class="review-answer" style="margin-top: 10px; color: var(--text-light);">
                         <strong>${explanationLabel}:</strong> ${q.explanation}
                     </div>
+                    ${referenceHtml}
                 `;
                 reviewList.appendChild(div);
             }
