@@ -22,6 +22,9 @@
       <h1>Estudio</h1>
       <p>Spring Boot · Java</p>
     </div>
+    
+    <!-- BOTÓN RECLAMAR PREMIO -->
+    <button id="btn-premio" class="btn-premio">🎁 Reclamar Premio</button>
   </header>
 
   <!-- 2. HERO (Texto principal) -->
@@ -102,5 +105,19 @@
   </footer>
 
 </div>
+
+<!-- MODAL PREMIO -->
+<div id="modal-premio" class="modal-overlay">
+  <div class="modal-content">
+    <!-- Botón de la X para cerrar -->
+    <button id="btn-cerrar-premio" class="modal-close" aria-label="Cerrar">&times;</button>
+    <!-- Asegúrate de que premio.jpg esté en la raíz o ajusta la ruta ej: img/premio.jpg -->
+    <img src="premio.jpg" alt="¡Felicidades, has ganado un premio!" class="modal-img">
+  </div>
+</div>
+
+<!-- SCRIPT PARA EL MODAL -->
+<script src="js/index.js"></script>
+
 </body>
 </html>

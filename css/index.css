@@ -217,3 +217,109 @@ body::before{
   .option-title{font-size:1.3rem}
   .hero h2{font-size:1.8rem}
 }
+
+/* =========================================
+   BOTÓN PREMIO Y MODAL
+   ========================================= */
+
+/* Botón en la cabecera */
+.btn-premio {
+  margin-left: auto; /* Lo empuja a la derecha */
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #1a0a00;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -6px rgba(255, 165, 0, 0.6);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-premio:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px -6px rgba(255, 165, 0, 0.8);
+}
+
+/* Fondo oscuro del modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none; /* Oculto por defecto */
+  place-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Clase para mostrar el modal con JS */
+.modal-overlay.active {
+  display: grid;
+  opacity: 1;
+}
+
+/* Contenedor de la imagen */
+.modal-content {
+  position: relative;
+  background: #121614;
+  padding: 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Botón de la X */
+.modal-close {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  width: 36px;
+  height: 36px;
+  background: #E74C3C;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
+  transition: transform 0.2s, background 0.2s;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  transform: scale(1.1) rotate(90deg);
+  background: #C0392B;
+}
+
+/* La imagen del premio */
+.modal-img {
+  display: block;
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* Animación de entrada */
+@keyframes zoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Responsive para móviles */
+@media (max-width: 760px) {
+  .btn-premio {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
