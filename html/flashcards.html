@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flashcards · Spring Boot &amp; Java</title>
+    
+<!-- CONEXIÓN AL CSS EXTERNO -->
+<link rel="stylesheet" href="../css/flashcards.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <h1>Flashcards</h1>
+      <p>Spring Boot · Java</p>
+    </div>
+    <!-- CAMBIO: Ahora apunta a la raíz (../) -->
+    <a href="../index.html" class="back-link">← Inicio</a>
+  </header>
+
+  <!-- ============ SUBIR ARCHIVO ============ -->
+  <section id="screen-upload" class="screen">
+    <div class="panel">
+      <h2>Cargar tus preguntas</h2>
+      <p class="sub">
+        Sube un archivo <code>.txt</code> con el formato
+        <code>pregunta:</code> / <code>respuesta teórica:</code> /
+        <code>explicación como lo aplique en el proyecto:</code> /
+        <code>Referencia:</code> separados por <code>---</code>.
+        Las secciones <code>respuesta falsa 1</code>, <code>respuesta falsa 2</code>, etc. se ignoran automáticamente.
+      </p>
+
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".txt,text/plain" hidden />
+        <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span class="dz-title">Arrastra tu archivo aquí</span>
+        <span class="dz-sub">o haz clic para seleccionarlo</span>
+      </label>
+
+      <div class="file-info" id="fileInfo" hidden></div>
+
+      <label class="check">
+        <input type="checkbox" id="dedupe" />
+        Eliminar preguntas duplicadas
+      </label>
+
+      <button class="btn btn-primary" id="startBtn" disabled>Comenzar a estudiar</button>
+    </div>
+  </section>
+
+  <!-- ============ SELECCIÓN DE MODO ============ -->
+  <section id="screen-mode" class="screen" hidden>
+    <div class="panel">
+      <h2>Elige tu modo de estudio</h2>
+      <p class="sub">
+        Tienes <b id="modeCount">0</b> tarjeta(s) cargada(s). ¿Cómo quieres practicar?
+      </p>
+
+      <div class="mode-grid">
+        <button class="mode-card" id="modeRepaso">
+          <div class="mode-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="mode-name">Repaso</div>
+          <div class="mode-desc">
+            Mira cada pregunta con su respuesta al mismo tiempo, en orden aleatorio. Ideal para leer y asimilar.
+          </div>
+        </button>
+
+        <button class="mode-card" id="modeFlashcards">
+          <div class="mode-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/>
+            </svg>
+          </div>
+          <div class="mode-name">Flashcards</div>
+          <div class="mode-desc">
+            Intenta responder antes de voltear. Las que falles se repetirán 3 veces en orden aleatorio hasta dominarlas.
+          </div>
+        </button>
+      </div>
+
+      <button class="btn btn-ghost" id="backToUploadBtn" style="width:100%;margin-top:16px">
+        ← Volver a cargar archivo
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ MODO REPASO ============ -->
+  <section id="screen-repaso" class="screen" hidden>
+    <div class="repaso-hud">
+      <span id="repasoCounter">1 / 0</span>
+      <div class="progress"><div class="progress-fill" id="repasoProgress"></div></div>
+    </div>
+
+    <div class="repaso-card">
+      <div class="repaso-block">
+        <div class="face-tag">Pregunta</div>
+        <div class="repaso-question" id="repasoQuestion"></div>
+      </div>
+      <div class="repaso-divider"></div>
+      <div class="repaso-block">
+        <div class="face-tag tag-java">Respuesta</div>
+        <div class="repaso-answer" id="repasoAnswer"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" id="repasoPrevBtn">← Anterior</button>
+      <button class="btn btn-ok" id="repasoNextBtn">Siguiente →</button>
+    </div>
+
+    <p class="hint"><kbd>←</kbd> anterior · <kbd>→</kbd> siguiente</p>
+  </section>
+
+  <!-- ============ MODO FLASHCARDS ============ -->
+  <section id="screen-study" class="screen" hidden>
+    <div class="hud">
+      <div class="hud-item">
+        <span class="hud-label">Completadas</span>
+        <span class="hud-value" id="statDone">0/0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Aciertos</span>
+        <span class="hud-value ok" id="statOk">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Fallos</span>
+        <span class="hud-value bad" id="statBad">0</span>
+      </div>
+    </div>
+
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div id="cardBadge" class="card-badge is-new">Tarjeta nueva</div>
+
+    <div class="card-scene" id="cardScene">
+      <div class="card" id="card">
+        <div class="face front">
+          <div class="face-tag">Pregunta</div>
+          <div class="face-body" id="questionText"></div>
+        </div>
+        <div class="face back">
+          <div class="face-tag tag-java">Respuesta</div>
+          <div class="face-body" id="answerText"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions" id="revealActions">
+      <button class="btn btn-ghost" id="revealBtn">Mostrar respuesta</button>
+    </div>
+
+    <div class="actions" id="judgeActions" hidden>
+      <button class="btn btn-bad" id="wrongBtn">✕ No la sabía</button>
+      <button class="btn btn-ok" id="rightBtn">✓ La sabía</button>
+    </div>
+
+    <p class="hint">
+      <kbd>Espacio</kbd> voltear · <kbd>←</kbd> no la sabía · <kbd>→</kbd> la sabía
+    </p>
+  </section>
+
+  <!-- ============ FIN ============ -->
+  <section id="screen-done" class="screen" hidden>
+    <div class="panel done-panel">
+      <div class="done-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      </div>
+      <h2>¡Sesión completada!</h2>
+      <p class="sub" id="doneSubtitle">Has dominado todas las tarjetas.</p>
+
+      <div class="done-stats" id="doneStats"></div>
+
+      <div class="done-actions">
+        <button class="btn btn-primary" id="restartBtn">Estudiar de nuevo</button>
+        <button class="btn btn-ghost" id="newFileBtn">Cargar otro archivo</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- CONEXIÓN AL JAVASCRIPT EXTERNO (al final del body) -->
+<script src="../js/flashcards.js"></script>
+</body>
+</html>

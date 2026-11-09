@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Examen Udemy</title>
+    
+    <!-- CONEXIÓN AL CSS EXTERNO -->
+    <link rel="stylesheet" href="../css/examen.css">
+</head>
+<body>
+
+    <!-- Pantalla de Inicio -->
+    <div id="setup-screen">
+        <a href="../index.html" class="back-link"
+           style="position:absolute; top:20px; left:20px;">← Inicio</a>
+
+        <div class="setup-box">
+            <h1>Selecciona el modo de prueba para empezar</h1>
+            <p>
+                Sube tu archivo .txt con el banco de preguntas o usa el ejemplo predeterminado.
+                <span class="format-hint">
+                    <strong>Formatos aceptados:</strong><br>
+                    <code>pregunta:</code> / <code>respuesta teórica:</code> /
+                    <code>explicación como lo aplique en el proyecto:</code> /
+                    <code>Referencia:</code> /
+                    <code>respuesta falsa 1:</code> … <code>respuesta falsa 3:</code><br>
+                    (también se admite el formato clásico <code>Pregunta:</code> /
+                    <code>A)</code> … <code>D)</code> / <code>Correcta:</code> / <code>Explicación:</code>).
+                    Separa cada pregunta con <code>---</code>.
+                </span>
+            </p>
+
+            <div class="file-input-container">
+                <label for="file-upload">Cargar banco_preguntas.txt:</label>
+                <input type="file" id="file-upload" accept=".txt">
+            </div>
+
+            <div class="btn-container" style="margin-top: 30px;">
+                <button class="btn-outline" onclick="startQuiz('practice')">Modo de práctica</button>
+                <button class="btn-outline" onclick="startQuiz('review')">Modo Repaso</button>
+                <button class="btn-primary" onclick="startQuiz('exam')">Modo de examen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla del Quiz -->
+    <div id="quiz-screen">
+        <div class="quiz-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <span id="sidebar-title">Progreso de la prueba</span>
+                </div>
+                <ul class="question-list" id="question-list">
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <div class="top-bar">
+                    <span class="mode-indicator" id="mode-indicator">Modo de práctica (beta)</span>
+                    <div class="progress-container">
+                        <span id="progress-text">0/0</span>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progress-fill"></div>
+                        </div>
+                        <button class="btn-outline" style="padding: 6px 12px; font-size: 14px;" onclick="finishQuiz()">Acabar prueba</button>
+                    </div>
+                </div>
+
+                <div class="question-area" id="question-area">
+                </div>
+
+                <div class="bottom-bar">
+                    <button class="btn-outline" id="select-btn" onclick="confirmSelection()">Seleccionar</button>
+                    <button class="btn-primary" id="next-btn" onclick="nextQuestion()">Siguiente pregunta &rarr;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Resultados -->
+    <div id="results-screen">
+        <div class="results-container">
+            <div class="results-header">
+                <h2>Resultados de la prueba</h2>
+                <div class="score-circle">
+                    <span class="score-number" id="final-score">0%</span>
+                    <span style="font-size: 14px; color: var(--text-light);">Puntuación</span>
+                </div>
+                <p id="score-text">Has acertado 0 de 0 preguntas.</p>
+            </div>
+
+            <h3>Revisión de respuestas</h3>
+            <div class="review-list" id="review-list">
+            </div>
+
+            <div class="pagination-controls" id="pagination-controls">
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; display: flex; gap: 12px;
+                        justify-content: center; flex-wrap: wrap;">
+                <a href="../index.html" class="back-link"
+                   style="padding: 13px 24px; font-size: 15px;">← Volver al inicio</a>
+                <button class="btn-primary" onclick="location.reload()">Volver a empezar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONEXIÓN AL JAVASCRIPT EXTERNO (al final del body) -->
+    <script src="../js/examen.js"></script>
+</body>
+</html>
