@@ -45,7 +45,7 @@ body::before{
 .app{position:relative;z-index:1;width:100%;max-width:840px}
 
 /* ---------- Topbar ---------- */
-.topbar{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:26px;flex-wrap:wrap;}
 .brand-mark{
   width:46px;height:46px;flex:0 0 46px;border-radius:14px;
   background:linear-gradient(135deg,var(--spring),var(--java));
@@ -59,9 +59,14 @@ body::before{
   text-transform:uppercase;color:var(--muted);margin-top:2px;
 }
 
-/* ---------- Botón Inicio ---------- */
+/* ---------- Botones de Navegación ---------- */
+.topbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .back-link{
-  margin-left:auto;
   color:var(--muted);
   text-decoration:none;
   font-size:.82rem;
@@ -72,11 +77,19 @@ body::before{
   border:1px solid var(--border);
   transition:background .18s,color .18s,border-color .18s;
   white-space:nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
 .back-link:hover{
   background:var(--surface-2);
   color:var(--text);
   border-color:rgba(255,255,255,.22);
+}
+.back-link svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* ---------- Paneles ---------- */

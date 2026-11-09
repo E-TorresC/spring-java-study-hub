@@ -8,6 +8,9 @@
   const screenStudy  = $('screen-study');
   const screenRepaso = $('screen-repaso');
   const screenDone   = $('screen-done');
+  
+  // Botón Volver
+  const btnBack      = $('btnBack');
 
   // Setup (subida + modos)
   const fileInput     = $('fileInput');
@@ -79,6 +82,10 @@
     screenStudy.hidden  = name !== 'study';
     screenRepaso.hidden = name !== 'repaso';
     screenDone.hidden   = name !== 'done';
+    
+    if (btnBack) {
+      btnBack.hidden = name === 'setup';
+    }
   };
 
   const formatTime = (ms) => {
@@ -433,6 +440,12 @@
   restartBtn.addEventListener('click', () => startSession(S.mode));
 
   newFileBtn.addEventListener('click', () => {
+    showScreen('setup');
+    setModeButtonsEnabled(S.parsed.length > 0);
+  });
+  
+  btnBack.addEventListener('click', () => {
+    // Volver al setup
     showScreen('setup');
     setModeButtonsEnabled(S.parsed.length > 0);
   });

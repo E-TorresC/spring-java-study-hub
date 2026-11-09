@@ -31,7 +31,7 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
 
 ---`;
 
-// --- HELPERS DE ESCAPADO (Bug #1) ---
+// --- HELPERS DE ESCAPADO ---
 const esc = Parser.escapeHtml;
 const escBr = Parser.escapeHtmlWithBreaks;
 
@@ -41,8 +41,8 @@ let currentQuestionIndex = 0;
 let userAnswers = [];
 let tempUserAnswers = [];
 let quizMode = 'practice';
-let questionsSource = null;        // 'file' | 'default' | null (Bug #4)
-let manualConfirm = false;         // NUEVO: toggle de confirmación manual
+let questionsSource = null;
+let manualConfirm = false;
 
 let reviewPage = 1;
 const itemsPerPage = 5;
@@ -81,7 +81,6 @@ function shuffleArray(array) {
     return array;
 }
 
-// NUEVO: refleja el modo actual (auto/manual) en el indicador
 function updateModeIndicator() {
     const el = document.getElementById('mode-indicator');
     let baseText = '';
@@ -110,11 +109,8 @@ function updateModeIndicator() {
 // --- INICIO DEL QUIZ ---
 function startQuiz(mode) {
     quizMode = mode;
-
-    // NUEVO: leer el toggle de confirmación manual
     manualConfirm = document.getElementById('manual-confirm').checked;
 
-    // Bug #4: avisar antes de usar el banco de ejemplo
     if (questions.length === 0) {
         const wants = confirm(
             'No has cargado ningún archivo. ¿Quieres empezar con el banco de ejemplo (2 preguntas)?'
@@ -148,7 +144,18 @@ function startQuiz(mode) {
     renderQuestion();
 }
 
-// Bug #3: reiniciar sin recargar (mantiene el archivo cargado)
+// --- VOLVER AL MENÚ ANTERIOR (SETUP) ---
+function goBackToSetup() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    if (answered > 0 && quizMode !== 'review') {
+        if (!confirm('¿Seguro que quieres volver al menú anterior? Perderás el progreso actual.')) return;
+    }
+    
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('results-screen').style.display = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+}
+
 function restartQuiz() {
     document.getElementById('results-screen').style.display = 'none';
 
@@ -182,7 +189,7 @@ function jumpToQuestion(index) {
     document.getElementById('question-area').scrollTop = 0;
 }
 
-// --- SIDEBAR (Bug #1: esc) ---
+// --- SIDEBAR ---
 function renderSidebar() {
     const list = document.getElementById('question-list');
     list.innerHTML = '';
@@ -220,7 +227,7 @@ function renderSidebar() {
     });
 }
 
-// --- PREGUNTA (Bug #1: escBr en question, options, feedback) ---
+// --- PREGUNTA ---
 function renderQuestion() {
     const q = questions[currentQuestionIndex];
     const area = document.getElementById('question-area');
@@ -294,7 +301,6 @@ function renderQuestion() {
     const explanationLabel = q.explanationLabel || 'Explicación';
 
     if (quizMode === 'review') {
-        // --- MODO REPASO: sin botón de confirmar ---
         feedbackContainer.style.display = 'block';
         const header = document.getElementById('feedback-header');
         const title = document.getElementById('feedback-title');
@@ -319,30 +325,23 @@ function renderQuestion() {
         selectBtn.style.display = 'none';
         nextBtn.disabled = false;
     } else {
-        // --- PRÁCTICA / EXAMEN ---
         if (quizMode === 'practice' && isConfirmed) {
             showFeedback();
         } else {
             feedbackContainer.style.display = 'none';
         }
 
-        // NUEVO: lógica del botón "Confirmar respuesta" según modo
-        // - Auto (práctica y toggle OFF): sin botón, feedback al hacer clic en opción.
-        // - Manual (examen siempre, práctica si toggle ON): botón visible.
         const autoMode = (quizMode === 'practice' && !manualConfirm);
 
         if (isConfirmed) {
-            // Ya respondida (auto o manual): ocultar "Confirmar", habilitar "Siguiente"
             selectBtn.style.display = 'none';
             selectBtn.disabled = true;
             nextBtn.disabled = false;
         } else if (autoMode) {
-            // Auto, aún sin seleccionar: sin botón, "Siguiente" bloqueado
             selectBtn.style.display = 'none';
             selectBtn.disabled = true;
             nextBtn.disabled = true;
         } else {
-            // Manual, aún sin confirmar: mostrar "Confirmar respuesta"
             selectBtn.style.display = 'inline-block';
             selectBtn.disabled = (activeSelection === null);
             nextBtn.disabled = true;
@@ -359,7 +358,6 @@ function selectOption(optionIndex) {
     if (quizMode === 'review') return;
     if (userAnswers[currentQuestionIndex] !== null) return;
 
-    // NUEVO: en práctica auto, al hacer clic se confirma inmediatamente
     const autoConfirm = (quizMode === 'practice' && !manualConfirm);
 
     if (autoConfirm) {
@@ -381,7 +379,7 @@ function confirmSelection() {
     renderQuestion();
 }
 
-// --- FEEDBACK (Bug #1: escBr) ---
+// --- FEEDBACK ---
 function showFeedback() {
     const q = questions[currentQuestionIndex];
     const selectedIndex = userAnswers[currentQuestionIndex];
@@ -469,7 +467,7 @@ function finishQuiz() {
     renderReviewPage();
 }
 
-// --- REVISIÓN (Bug #1: escBr) ---
+// --- REVISIÓN ---
 function renderReviewPage() {
     const reviewList = document.getElementById('review-list');
     reviewList.innerHTML = '';

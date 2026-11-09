@@ -79,7 +79,7 @@ body > * {
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ============================================================
-   BOTÓN VOLVER AL INICIO
+   BOTÓN VOLVER / PRINCIPAL
    ============================================================ */
 .back-link {
     color: var(--muted);
@@ -90,13 +90,20 @@ body > * {
     border-radius: 10px;
     background: var(--surface);
     border: 1px solid var(--border);
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     transition: background .18s, color .18s, border-color .18s;
+    cursor: pointer;
 }
 .back-link:hover {
     background: var(--surface-2);
     color: var(--text);
     border-color: rgba(255,255,255,.22);
+}
+.back-link svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* ============================================================
@@ -168,7 +175,7 @@ body > * {
 }
 
 /* ============================================================
-   NUEVO: CHECKBOX CONFIRMACIÓN MANUAL
+   CHECKBOX CONFIRMACIÓN MANUAL
    ============================================================ */
 .check-confirm {
     display: flex;
@@ -403,6 +410,8 @@ input[type="file"]::file-selector-button:hover {
     justify-content: space-between;
     align-items: center;
     background: transparent;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .mode-indicator {
@@ -422,6 +431,7 @@ input[type="file"]::file-selector-button:hover {
     font-size: 14px;
     color: var(--muted);
     font-weight: 600;
+    flex-wrap: wrap;
 }
 
 .progress-bar-bg {
