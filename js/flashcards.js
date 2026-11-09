@@ -3,23 +3,23 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const screenUpload = $('screen-upload');
-  const screenMode   = $('screen-mode');
+  // Pantallas
+  const screenSetup  = $('screen-setup');
   const screenStudy  = $('screen-study');
   const screenRepaso = $('screen-repaso');
   const screenDone   = $('screen-done');
+  
+  // Botón Volver
+  const btnBack      = $('btnBack');
 
-  const dropzone   = $('dropzone');
-  const fileInput  = $('fileInput');
-  const fileInfo   = $('fileInfo');
-  const startBtn   = $('startBtn');
-  const dedupeChk  = $('dedupe');
+  // Setup (subida + modos)
+  const fileInput     = $('fileInput');
+  const fileInfo      = $('fileInfo');
+  const dedupeChk     = $('dedupe');
+  const modeRepasoBtn = $('modeRepaso');
+  const modeFlashBtn  = $('modeFlashcards');
 
-  const modeCount      = $('modeCount');
-  const modeRepasoBtn  = $('modeRepaso');
-  const modeFlashBtn   = $('modeFlashcards');
-  const backToUploadBtn = $('backToUploadBtn');
-
+  // Repaso
   const repasoCounter  = $('repasoCounter');
   const repasoProgress = $('repasoProgress');
   const repasoQuestion = $('repasoQuestion');
@@ -27,6 +27,7 @@
   const repasoPrevBtn  = $('repasoPrevBtn');
   const repasoNextBtn  = $('repasoNextBtn');
 
+  // Flashcards
   const cardEl      = $('card');
   const cardScene   = $('cardScene');
   const questionEl  = $('questionText');
@@ -44,6 +45,7 @@
   const statBad      = $('statBad');
   const progressFill = $('progressFill');
 
+  // Fin
   const doneSubtitle = $('doneSubtitle');
   const doneStats    = $('doneStats');
   const restartBtn   = $('restartBtn');
@@ -76,11 +78,14 @@
   };
 
   const showScreen = (name) => {
-    screenUpload.hidden = name !== 'upload';
-    screenMode.hidden   = name !== 'mode';
+    screenSetup.hidden  = name !== 'setup';
     screenStudy.hidden  = name !== 'study';
     screenRepaso.hidden = name !== 'repaso';
     screenDone.hidden   = name !== 'done';
+    
+    if (btnBack) {
+      btnBack.hidden = name === 'setup';
+    }
   };
 
   const formatTime = (ms) => {
@@ -90,10 +95,12 @@
     return m > 0 ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
   };
 
-  const escapeHtml = (str) =>
-    String(str).replace(/[&<>"']/g, (c) => (
-      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-    ));
+  const escapeHtml = Parser.escapeHtml;
+
+  function setModeButtonsEnabled(enabled) {
+    modeRepasoBtn.disabled = !enabled;
+    modeFlashBtn.disabled  = !enabled;
+  }
 
   function renderAnswerHtml(card) {
     let html = '';
@@ -111,7 +118,6 @@
           '<div class="answer-text">' + escapeHtml(card.explanation) + '</div>' +
         '</div>';
     }
-    // NUEVO: la Referencia se muestra justo después de la explicación
     if (card.reference) {
       html +=
         '<div class="answer-section answer-section-reference">' +
@@ -122,53 +128,7 @@
     return html;
   }
 
-  function parseCards(raw) {
-    const text = String(raw).replace(/\r\n?/g, '\n');
-    const blocks = text.split(/^[ \t]*-{3,}[ \t]*$/gm);
-    const cards = [];
-
-    const markerRe =
-      /^[ \t]*(pregunta|respuesta\s+falsa(?:\s+\d+)?|respuesta(?:\s+te[oó]rica)?|explicaci[oó]n(?:\s+[^:\n]+)?|referencia)[ \t]*:[ \t]*/gim;
-
-    for (const block of blocks) {
-      const matches = [];
-      let m;
-      markerRe.lastIndex = 0;
-      while ((m = markerRe.exec(block)) !== null) {
-        const label = m[1].toLowerCase();
-        const key = label.startsWith('pregunta')
-          ? 'question'
-          : label.startsWith('referencia')
-            ? 'reference'
-            : label.startsWith('explicaci')
-              ? 'explanation'
-              : (label.startsWith('respuesta') && label.includes('falsa'))
-                ? 'false'
-                : 'theory';
-        matches.push({ key, start: m.index, contentStart: markerRe.lastIndex });
-      }
-      if (matches.length === 0) continue;
-
-      const fields = { question: '', theory: '', explanation: '', reference: '' };
-      for (let i = 0; i < matches.length; i++) {
-        const end = i + 1 < matches.length ? matches[i + 1].start : block.length;
-        const content = block.slice(matches[i].contentStart, end).trim();
-        if (matches[i].key === 'false') continue;
-        if (!fields[matches[i].key]) fields[matches[i].key] = content;
-      }
-
-      if (fields.question && (fields.theory || fields.explanation)) {
-        cards.push({
-          question: fields.question,
-          theory: fields.theory,
-          explanation: fields.explanation,
-          reference: fields.reference
-        });
-      }
-    }
-    return cards;
-  }
-
+  /* ---------- CARGA DE ARCHIVO ---------- */
   async function loadFile(file) {
     if (!file) return;
 
@@ -176,8 +136,8 @@
       fileInfo.hidden = false;
       fileInfo.className = 'file-info err';
       fileInfo.textContent = 'El archivo debe ser un .txt de texto plano.';
-      startBtn.disabled = true;
       S.parsed = [];
+      setModeButtonsEnabled(false);
       return;
     }
 
@@ -188,11 +148,11 @@
       fileInfo.hidden = false;
       fileInfo.className = 'file-info err';
       fileInfo.textContent = 'No se pudo leer el archivo.';
-      startBtn.disabled = true;
+      setModeButtonsEnabled(false);
       return;
     }
 
-    const cards = parseCards(content);
+    const cards = Parser.parseText(content);
     S.parsed = cards;
 
     fileInfo.hidden = false;
@@ -202,7 +162,7 @@
       fileInfo.innerHTML =
         '<div><div class="fi-name">' + escapeHtml(file.name) + '</div>' +
         '<div class="fi-meta">No se encontró ninguna pareja válida <b>pregunta:</b> / <b>respuesta:</b></div></div>';
-      startBtn.disabled = true;
+      setModeButtonsEnabled(false);
       return;
     }
 
@@ -213,38 +173,15 @@
       '<div class="fi-meta">' + sizeKb + ' KB</div></div>' +
       '<div class="fi-count">' + cards.length + ' tarjeta' + (cards.length === 1 ? '' : 's') + '</div>';
 
-    startBtn.disabled = false;
+    setModeButtonsEnabled(true);
   }
 
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     loadFile(file);
-    fileInput.value = '';
   });
 
-  ['dragenter', 'dragover'].forEach((ev) =>
-    dropzone.addEventListener(ev, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropzone.classList.add('drag');
-    })
-  );
-
-  ['dragleave', 'drop'].forEach((ev) =>
-    dropzone.addEventListener(ev, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropzone.classList.remove('drag');
-    })
-  );
-
-  dropzone.addEventListener('drop', (e) => {
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) loadFile(file);
-  });
-
-  ['dragover', 'drop'].forEach((ev) =>
-    window.addEventListener(ev, (e) => e.preventDefault())
-  );
-
+  /* ---------- CONSTRUIR TARJETAS ---------- */
   function buildCards() {
     let cards = S.parsed.map((c) => ({
       question: c.question,
@@ -265,21 +202,16 @@
     return cards;
   }
 
-  startBtn.addEventListener('click', () => {
-    const cards = buildCards();
-    if (!cards.length) return;
-    modeCount.textContent = cards.length;
-    showScreen('mode');
-  });
-
-  backToUploadBtn.addEventListener('click', () => showScreen('upload'));
-
+  /* ---------- LANZAR SESIÓN ---------- */
   modeRepasoBtn.addEventListener('click', () => startSession('repaso'));
   modeFlashBtn.addEventListener('click',  () => startSession('flashcards'));
 
   function startSession(mode) {
     const base = buildCards();
-    if (!base.length) return;
+    if (!base.length) {
+      alert('No hay tarjetas cargadas. Sube un archivo .txt primero.');
+      return;
+    }
 
     S.mode = mode;
     S.startTime = Date.now();
@@ -317,6 +249,7 @@
     }
   }
 
+  /* ---------- MODO REPASO ---------- */
   function renderRepaso() {
     const card = S.repasoCards[S.repasoIndex];
     repasoQuestion.textContent = card.question;
@@ -349,6 +282,7 @@
     }
   });
 
+  /* ---------- MODO FLASHCARDS ---------- */
   function requeue(idx) {
     const q = S.queue;
     if (q.length === 0) { q.push(idx); return; }
@@ -418,9 +352,14 @@
     cardScene.classList.remove('flash-ok', 'flash-bad');
     void cardScene.offsetWidth;
     cardScene.classList.add(kind === 'ok' ? 'flash-ok' : 'flash-bad');
+    clearTimeout(cardScene._flashTimer);
+    cardScene._flashTimer = setTimeout(() => {
+      cardScene.classList.remove('flash-ok', 'flash-bad');
+    }, 500);
   }
   cardScene.addEventListener('animationend', () => {
     cardScene.classList.remove('flash-ok', 'flash-bad');
+    clearTimeout(cardScene._flashTimer);
   });
 
   function answer(isCorrect) {
@@ -472,14 +411,12 @@
         }
       }
     } else if (!screenRepaso.hidden) {
-      if (e.key === 'ArrowRight') {
-        e.preventDefault(); repasoNextBtn.click();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault(); repasoPrevBtn.click();
-      }
+      if (e.key === 'ArrowRight') { e.preventDefault(); repasoNextBtn.click(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); repasoPrevBtn.click(); }
     }
   });
 
+  /* ---------- FIN DE SESIÓN ---------- */
   function finishSession() {
     const elapsed = Date.now() - S.startTime;
 
@@ -503,10 +440,15 @@
   restartBtn.addEventListener('click', () => startSession(S.mode));
 
   newFileBtn.addEventListener('click', () => {
-    showScreen('upload');
-    fileInfo.hidden = true;
-    startBtn.disabled = S.parsed.length === 0;
+    showScreen('setup');
+    setModeButtonsEnabled(S.parsed.length > 0);
+  });
+  
+  btnBack.addEventListener('click', () => {
+    // Volver al setup
+    showScreen('setup');
+    setModeButtonsEnabled(S.parsed.length > 0);
   });
 
-  showScreen('upload');
+  showScreen('setup');
 })();

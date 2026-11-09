@@ -4,8 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Flashcards · Spring Boot &amp; Java</title>
-    
-<!-- CONEXIÓN AL CSS EXTERNO -->
 <link rel="stylesheet" href="../css/flashcards.css">
 </head>
 <body>
@@ -22,33 +20,39 @@
       <h1>Flashcards</h1>
       <p>Spring Boot · Java</p>
     </div>
-    <!-- CAMBIO: Ahora apunta a la raíz (../) -->
-    <a href="../index.html" class="back-link">← Inicio</a>
+    
+    <div class="topbar-actions">
+      <button class="back-link" id="btnBack" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+      <a href="../index.html" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Principal
+      </a>
+    </div>
   </header>
 
-  <!-- ============ SUBIR ARCHIVO ============ -->
-  <section id="screen-upload" class="screen">
+  <!-- ============ SETUP (subir + elegir modo en una sola pantalla) ============ -->
+  <section id="screen-setup" class="screen">
     <div class="panel">
-      <h2>Cargar tus preguntas</h2>
+      <h2>Sube tu archivo y elige el modo de estudio</h2>
       <p class="sub">
-        Sube un archivo <code>.txt</code> con el formato
-        <code>pregunta:</code> / <code>respuesta teórica:</code> /
-        <code>explicación como lo aplique en el proyecto:</code> /
-        <code>Referencia:</code> separados por <code>---</code>.
-        Las secciones <code>respuesta falsa 1</code>, <code>respuesta falsa 2</code>, etc. se ignoran automáticamente.
+        Carga tu banco de preguntas en <code>.txt</code> y elige cómo quieres practicar.
+        <span class="format-hint">
+          <strong>Formatos aceptados:</strong><br>
+          <code>pregunta:</code> / <code>respuesta teórica:</code> /
+          <code>explicación como lo aplique en el proyecto:</code> /
+          <code>Referencia:</code> / <code>respuesta falsa 1:</code> …
+          Las secciones <code>respuesta falsa N</code> se ignoran automáticamente.
+          Separa cada bloque con <code>---</code>.
+        </span>
       </p>
 
-      <label class="dropzone" id="dropzone">
-        <input type="file" id="fileInput" accept=".txt,text/plain" hidden />
-        <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <span class="dz-title">Arrastra tu archivo aquí</span>
-        <span class="dz-sub">o haz clic para seleccionarlo</span>
-      </label>
+      <div class="file-input-container">
+        <label for="fileInput">Cargar banco_preguntas.txt:</label>
+        <input type="file" id="fileInput" accept=".txt">
+      </div>
 
       <div class="file-info" id="fileInfo" hidden></div>
 
@@ -57,49 +61,22 @@
         Eliminar preguntas duplicadas
       </label>
 
-      <button class="btn btn-primary" id="startBtn" disabled>Comenzar a estudiar</button>
-    </div>
-  </section>
-
-  <!-- ============ SELECCIÓN DE MODO ============ -->
-  <section id="screen-mode" class="screen" hidden>
-    <div class="panel">
-      <h2>Elige tu modo de estudio</h2>
-      <p class="sub">
-        Tienes <b id="modeCount">0</b> tarjeta(s) cargada(s). ¿Cómo quieres practicar?
-      </p>
-
-      <div class="mode-grid">
-        <button class="mode-card" id="modeRepaso">
-          <div class="mode-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </div>
-          <div class="mode-name">Repaso</div>
-          <div class="mode-desc">
-            Mira cada pregunta con su respuesta al mismo tiempo, en orden aleatorio. Ideal para leer y asimilar.
-          </div>
+      <div class="btn-container">
+        <button class="btn btn-ghost" id="modeRepaso" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          Modo Repaso
         </button>
-
-        <button class="mode-card" id="modeFlashcards">
-          <div class="mode-icon">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/>
-            </svg>
-          </div>
-          <div class="mode-name">Flashcards</div>
-          <div class="mode-desc">
-            Intenta responder antes de voltear. Las que falles se repetirán 3 veces en orden aleatorio hasta dominarlas.
-          </div>
+        <button class="btn btn-primary" id="modeFlashcards" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/>
+          </svg>
+          Modo Flashcards
         </button>
       </div>
-
-      <button class="btn btn-ghost" id="backToUploadBtn" style="width:100%;margin-top:16px">
-        ← Volver a cargar archivo
-      </button>
     </div>
   </section>
 
@@ -201,7 +178,8 @@
 
 </div>
 
-<!-- CONEXIÓN AL JAVASCRIPT EXTERNO (al final del body) -->
+<!-- Parser compartido + JS de flashcards -->
+<script src="../js/parser.js"></script>
 <script src="../js/flashcards.js"></script>
 </body>
 </html>
