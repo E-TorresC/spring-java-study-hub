@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Examen Udemy</title>
-    
-    <!-- CONEXIÓN AL CSS EXTERNO -->
     <link rel="stylesheet" href="../css/examen.css">
 </head>
 <body>
@@ -101,12 +99,14 @@
                         justify-content: center; flex-wrap: wrap;">
                 <a href="../index.html" class="back-link"
                    style="padding: 13px 24px; font-size: 15px;">← Volver al inicio</a>
-                <button class="btn-primary" onclick="location.reload()">Volver a empezar</button>
+                <!-- Bug #3: reinicia manteniendo el archivo cargado -->
+                <button class="btn-primary" onclick="restartQuiz()">Volver a empezar</button>
             </div>
         </div>
     </div>
 
-    <!-- CONEXIÓN AL JAVASCRIPT EXTERNO (al final del body) -->
+    <!-- Parser compartido (Bug #7) + JS del examen -->
+    <script src="../js/parser.js"></script>
     <script src="../js/examen.js"></script>
 </body>
 </html>

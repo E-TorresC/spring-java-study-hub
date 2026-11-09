@@ -4,8 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Flashcards · Spring Boot &amp; Java</title>
-    
-<!-- CONEXIÓN AL CSS EXTERNO -->
 <link rel="stylesheet" href="../css/flashcards.css">
 </head>
 <body>
@@ -22,7 +20,6 @@
       <h1>Flashcards</h1>
       <p>Spring Boot · Java</p>
     </div>
-    <!-- CAMBIO: Ahora apunta a la raíz (../) -->
     <a href="../index.html" class="back-link">← Inicio</a>
   </header>
 
@@ -201,7 +198,8 @@
 
 </div>
 
-<!-- CONEXIÓN AL JAVASCRIPT EXTERNO (al final del body) -->
+<!-- Parser compartido (Bug #7) + JS de flashcards -->
+<script src="../js/parser.js"></script>
 <script src="../js/flashcards.js"></script>
 </body>
 </html>

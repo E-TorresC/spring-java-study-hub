@@ -90,10 +90,8 @@
     return m > 0 ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
   };
 
-  const escapeHtml = (str) =>
-    String(str).replace(/[&<>"']/g, (c) => (
-      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-    ));
+  // Bug #7: usamos el helper compartido
+  const escapeHtml = Parser.escapeHtml;
 
   function renderAnswerHtml(card) {
     let html = '';
@@ -111,7 +109,6 @@
           '<div class="answer-text">' + escapeHtml(card.explanation) + '</div>' +
         '</div>';
     }
-    // NUEVO: la Referencia se muestra justo después de la explicación
     if (card.reference) {
       html +=
         '<div class="answer-section answer-section-reference">' +
@@ -120,53 +117,6 @@
         '</div>';
     }
     return html;
-  }
-
-  function parseCards(raw) {
-    const text = String(raw).replace(/\r\n?/g, '\n');
-    const blocks = text.split(/^[ \t]*-{3,}[ \t]*$/gm);
-    const cards = [];
-
-    const markerRe =
-      /^[ \t]*(pregunta|respuesta\s+falsa(?:\s+\d+)?|respuesta(?:\s+te[oó]rica)?|explicaci[oó]n(?:\s+[^:\n]+)?|referencia)[ \t]*:[ \t]*/gim;
-
-    for (const block of blocks) {
-      const matches = [];
-      let m;
-      markerRe.lastIndex = 0;
-      while ((m = markerRe.exec(block)) !== null) {
-        const label = m[1].toLowerCase();
-        const key = label.startsWith('pregunta')
-          ? 'question'
-          : label.startsWith('referencia')
-            ? 'reference'
-            : label.startsWith('explicaci')
-              ? 'explanation'
-              : (label.startsWith('respuesta') && label.includes('falsa'))
-                ? 'false'
-                : 'theory';
-        matches.push({ key, start: m.index, contentStart: markerRe.lastIndex });
-      }
-      if (matches.length === 0) continue;
-
-      const fields = { question: '', theory: '', explanation: '', reference: '' };
-      for (let i = 0; i < matches.length; i++) {
-        const end = i + 1 < matches.length ? matches[i + 1].start : block.length;
-        const content = block.slice(matches[i].contentStart, end).trim();
-        if (matches[i].key === 'false') continue;
-        if (!fields[matches[i].key]) fields[matches[i].key] = content;
-      }
-
-      if (fields.question && (fields.theory || fields.explanation)) {
-        cards.push({
-          question: fields.question,
-          theory: fields.theory,
-          explanation: fields.explanation,
-          reference: fields.reference
-        });
-      }
-    }
-    return cards;
   }
 
   async function loadFile(file) {
@@ -192,7 +142,8 @@
       return;
     }
 
-    const cards = parseCards(content);
+    // Bug #7: parser compartido
+    const cards = Parser.parseText(content);
     S.parsed = cards;
 
     fileInfo.hidden = false;
@@ -414,13 +365,19 @@
   revealBtn.addEventListener('click', reveal);
   cardScene.addEventListener('click', () => { if (!S.revealed) reveal(); });
 
+  // Bug #6: setTimeout de respaldo + limpieza al vuelo
   function flash(kind) {
     cardScene.classList.remove('flash-ok', 'flash-bad');
     void cardScene.offsetWidth;
     cardScene.classList.add(kind === 'ok' ? 'flash-ok' : 'flash-bad');
+    clearTimeout(cardScene._flashTimer);
+    cardScene._flashTimer = setTimeout(() => {
+      cardScene.classList.remove('flash-ok', 'flash-bad');
+    }, 500);
   }
   cardScene.addEventListener('animationend', () => {
     cardScene.classList.remove('flash-ok', 'flash-bad');
+    clearTimeout(cardScene._flashTimer);
   });
 
   function answer(isCorrect) {
@@ -472,11 +429,8 @@
         }
       }
     } else if (!screenRepaso.hidden) {
-      if (e.key === 'ArrowRight') {
-        e.preventDefault(); repasoNextBtn.click();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault(); repasoPrevBtn.click();
-      }
+      if (e.key === 'ArrowRight') { e.preventDefault(); repasoNextBtn.click(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); repasoPrevBtn.click(); }
     }
   });
 

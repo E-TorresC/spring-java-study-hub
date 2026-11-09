@@ -31,193 +31,46 @@ respuesta falsa 3: Uso record porque permite herencia múltiple y tiene construc
 
 ---`;
 
+// --- HELPERS DE ESCAPADO (Bug #1) ---
+const esc = Parser.escapeHtml;
+const escBr = Parser.escapeHtmlWithBreaks;
+
 // --- ESTADO GLOBAL ---
 let questions = [];
 let currentQuestionIndex = 0;
 let userAnswers = [];
 let tempUserAnswers = [];
 let quizMode = 'practice';
+let questionsSource = null; // 'file' | 'default' | null (Bug #4)
 
 let reviewPage = 1;
 const itemsPerPage = 5;
 
-document.getElementById('file-upload').addEventListener('change', function(e) {
+// --- CARGA DE ARCHIVO ---
+document.getElementById('file-upload').addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        parseQuestions(text);
-        if (questions.length === 0) {
+    reader.onload = function (ev) {
+        const text = ev.target.result;
+        const parsed = Parser.parseText(text);
+
+        if (parsed.length === 0) {
+            questions = [];
+            questionsSource = null;
             alert('No se encontraron preguntas válidas en el archivo. Revisa el formato.');
         } else {
-            alert(`Archivo cargado correctamente (${questions.length} preguntas). Ya puedes iniciar el modo de práctica, repaso o examen.`);
+            questions = parsed;
+            questionsSource = 'file';
+            alert(
+                `Archivo cargado correctamente (${parsed.length} preguntas). ` +
+                `Ya puedes iniciar el modo de práctica, repaso o examen.`
+            );
         }
     };
     reader.readAsText(file);
 });
-
-function parseQuestions(text) {
-    questions = [];
-    const normalized = text.replace(/\r\n?/g, '\n');
-    const blocks = normalized.split(/\n\s*-{3,}\s*(?=\n|$)/);
-
-    blocks.forEach(block => {
-        if (!block.trim()) return;
-
-        const isNewFormat =
-            /respuesta\s+te[oó]rica\s*:/i.test(block) ||
-            /respuesta\s+falsa/i.test(block);
-
-        const q = isNewFormat
-            ? parseNewFormatBlock(block)
-            : parseOldFormatBlock(block);
-
-        if (q && q.question && q.options.length >= 2) {
-            questions.push(q);
-        }
-    });
-}
-
-function parseNewFormatBlock(block) {
-    const data = {
-        question: '',
-        theory: '',
-        explanation: '',
-        reference: '',
-        falses: []
-    };
-
-    let currentField = null;
-
-    const appendToCurrent = (extra) => {
-        if (currentField === 'question')      data.question      += ' ' + extra;
-        else if (currentField === 'theory')    data.theory        += ' ' + extra;
-        else if (currentField === 'explanation') data.explanation += ' ' + extra;
-        else if (currentField === 'reference') data.reference    += ' ' + extra;
-        else if (currentField === 'false' && data.falses.length) {
-            data.falses[data.falses.length - 1] += ' ' + extra;
-        }
-    };
-
-    block.split('\n').forEach(raw => {
-        const line = raw.trim();
-        if (!line) return;
-        if (/^-{3,}$/.test(line)) return;
-
-        let m;
-
-        if ((m = line.match(/^pregunta\s*:\s*(.*)$/i))) {
-            currentField = 'question';
-            data.question = m[1].trim();
-            return;
-        }
-
-        if ((m = line.match(/^respuesta\s+te[oó]rica\s*:\s*(.*)$/i))) {
-            currentField = 'theory';
-            data.theory = m[1].trim();
-            return;
-        }
-
-        if ((m = line.match(/^explicaci[oó]n(\s+como\s+lo\s+apliqu[eé]\s+en\s+el\s+proyecto)?\s*:\s*(.*)$/i))) {
-            currentField = 'explanation';
-            data.explanation = m[2].trim();
-            return;
-        }
-
-        if ((m = line.match(/^referencia\s*:\s*(.*)$/i))) {
-            currentField = 'reference';
-            data.reference = m[1].trim();
-            return;
-        }
-
-        if ((m = line.match(/^respuesta\s+falsa(?:\s*\d+)?\s*:\s*(.*)$/i))) {
-            currentField = 'false';
-            data.falses.push(m[1].trim());
-            return;
-        }
-
-        if (currentField) appendToCurrent(line);
-    });
-
-    if (!data.question || !data.theory) return null;
-
-    const options = [
-        { text: data.theory, isCorrect: true },
-        ...data.falses
-            .filter(t => t && t.length > 0)
-            .map(t => ({ text: t, isCorrect: false }))
-    ];
-
-    return {
-        question: data.question,
-        options: options,
-        explanation: data.explanation || data.theory,
-        reference: data.reference || '',
-        explanationLabel: 'Aplicación en el proyecto'
-    };
-}
-
-function parseOldFormatBlock(block) {
-    const obj = {
-        question: '',
-        options: [],
-        explanation: '',
-        reference: '',
-        explanationLabel: 'Explicación'
-    };
-
-    let correctLetter = '';
-    let currentField = null;
-
-    block.split('\n').forEach(raw => {
-        const line = raw.trim();
-        if (!line) return;
-        if (/^-{3,}$/.test(line)) return;
-
-        let m;
-
-        if ((m = line.match(/^pregunta\s*:\s*(.*)$/i))) {
-            currentField = 'question';
-            obj.question = m[1].trim();
-        } else if ((m = line.match(/^([A-D])\)\s*(.*)$/i))) {
-            currentField = 'option';
-            obj.options.push({
-                letter: m[1].toUpperCase(),
-                text: m[2].trim(),
-                isCorrect: false
-            });
-        } else if ((m = line.match(/^correcta\s*:\s*(.*)$/i))) {
-            currentField = 'correct';
-            correctLetter = m[1].trim().toUpperCase().charAt(0);
-        } else if ((m = line.match(/^explicaci[oó]n\s*:\s*(.*)$/i))) {
-            currentField = 'explanation';
-            obj.explanation = m[1].trim();
-        } else if ((m = line.match(/^referencia\s*:\s*(.*)$/i))) {
-            currentField = 'reference';
-            obj.reference = m[1].trim();
-        } else {
-            if (currentField === 'question') {
-                obj.question += ' ' + line;
-            } else if (currentField === 'option' && obj.options.length) {
-                obj.options[obj.options.length - 1].text += ' ' + line;
-            } else if (currentField === 'explanation') {
-                obj.explanation += ' ' + line;
-            } else if (currentField === 'reference') {
-                obj.reference += ' ' + line;
-            }
-        }
-    });
-
-    obj.options.forEach(opt => {
-        if (opt.letter === correctLetter) opt.isCorrect = true;
-    });
-
-    if (!obj.question || obj.options.length === 0) return null;
-
-    return obj;
-}
 
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -227,11 +80,39 @@ function shuffleArray(array) {
     return array;
 }
 
+function updateModeIndicator() {
+    const el = document.getElementById('mode-indicator');
+    if (quizMode === 'practice') {
+        el.textContent = 'Modo de práctica (beta)';
+        el.style.backgroundColor = '#eceb98';
+        el.style.color = '#3d3c0a';
+    } else if (quizMode === 'review') {
+        el.textContent = 'Modo Repaso';
+        el.style.backgroundColor = 'rgba(248,152,32,.15)';
+        el.style.color = 'var(--java-2)';
+    } else {
+        el.textContent = 'Modo de examen';
+        el.style.backgroundColor = '#e6f4ea';
+        el.style.color = '#1e6055';
+    }
+    if (questionsSource === 'default') {
+        el.textContent += ' · banco de ejemplo';
+    }
+}
+
+// --- INICIO DEL QUIZ ---
 function startQuiz(mode) {
     quizMode = mode;
 
+    // Bug #4: avisar antes de usar el banco de ejemplo
     if (questions.length === 0) {
-        parseQuestions(DEFAULT_DATA);
+        const wants = confirm(
+            'No has cargado ningún archivo. ¿Quieres empezar con el banco de ejemplo (2 preguntas)?'
+        );
+        if (!wants) return;
+
+        questions = Parser.parseText(DEFAULT_DATA);
+        questionsSource = 'default';
     }
 
     if (questions.length === 0) {
@@ -240,8 +121,7 @@ function startQuiz(mode) {
     }
 
     questions = shuffleArray(questions);
-
-    questions.forEach(q => {
+    questions.forEach((q) => {
         q.options = shuffleArray(q.options);
     });
 
@@ -250,23 +130,36 @@ function startQuiz(mode) {
     currentQuestionIndex = 0;
 
     document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('results-screen').style.display = 'none';
     document.getElementById('quiz-screen').style.display = 'flex';
 
-    const modeIndicator = document.getElementById('mode-indicator');
-    if (quizMode === 'practice') {
-        modeIndicator.textContent = 'Modo de práctica (beta)';
-        modeIndicator.style.backgroundColor = '#eceb98';
-        modeIndicator.style.color = '#3d3c0a';
-    } else if (quizMode === 'review') {
-        modeIndicator.textContent = 'Modo Repaso';
-        modeIndicator.style.backgroundColor = 'rgba(248,152,32,.15)';
-        modeIndicator.style.color = 'var(--java-2)';
-    } else {
-        modeIndicator.textContent = 'Modo de examen';
-        modeIndicator.style.backgroundColor = '#e6f4ea';
-        modeIndicator.style.color = '#1e6055';
+    updateModeIndicator();
+    renderSidebar();
+    renderQuestion();
+}
+
+// Bug #3: reiniciar sin recargar (mantiene el archivo cargado)
+function restartQuiz() {
+    document.getElementById('results-screen').style.display = 'none';
+
+    if (questions.length === 0) {
+        document.getElementById('setup-screen').style.display = 'flex';
+        return;
     }
 
+    document.getElementById('quiz-screen').style.display = 'flex';
+
+    questions = shuffleArray(questions);
+    questions.forEach((q) => {
+        q.options = shuffleArray(q.options);
+    });
+
+    userAnswers = new Array(questions.length).fill(null);
+    tempUserAnswers = new Array(questions.length).fill(null);
+    currentQuestionIndex = 0;
+    reviewPage = 1;
+
+    updateModeIndicator();
     renderSidebar();
     renderQuestion();
 }
@@ -279,13 +172,13 @@ function jumpToQuestion(index) {
     document.getElementById('question-area').scrollTop = 0;
 }
 
+// --- SIDEBAR (Bug #1: esc) ---
 function renderSidebar() {
     const list = document.getElementById('question-list');
     list.innerHTML = '';
 
     questions.forEach((q, index) => {
         const li = document.createElement('li');
-
         const clickableClass = quizMode === 'review' ? 'clickable' : '';
         li.className = `question-item ${index === currentQuestionIndex ? 'active' : ''} ${clickableClass}`;
 
@@ -297,40 +190,45 @@ function renderSidebar() {
         if (userAnswers[index] !== null) {
             if (quizMode === 'practice') {
                 const selectedOpt = q.options[userAnswers[index]];
-                if (selectedOpt.isCorrect) {
-                    statusIcon = '<span class="status-icon correct"></span>';
-                } else {
-                    statusIcon = '<span class="status-icon incorrect"></span>';
-                }
+                statusIcon = selectedOpt.isCorrect
+                    ? '<span class="status-icon correct"></span>'
+                    : '<span class="status-icon incorrect"></span>';
             } else if (quizMode === 'exam') {
-                statusIcon = '<span class="status-icon" style="background-color: var(--spring); border-color: var(--spring);"></span>';
+                statusIcon =
+                    '<span class="status-icon" style="background-color: var(--spring); border-color: var(--spring);"></span>';
             }
         }
 
+        // En sidebar usamos esc (sin <br>) porque tiene white-space: nowrap.
         li.innerHTML = `
             ${statusIcon}
             <div>
                 <div style="font-size: 12px; color: #a1a3a5; margin-bottom: 4px;">Pregunta ${index + 1}</div>
-                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; opacity: 0.8;">${q.question}</div>
+                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; opacity: 0.8;">${esc(q.question)}</div>
             </div>
         `;
         list.appendChild(li);
     });
 }
 
+// --- PREGUNTA (Bug #1: escBr en question, options, feedback) ---
 function renderQuestion() {
     const q = questions[currentQuestionIndex];
     const area = document.getElementById('question-area');
     const isConfirmed = userAnswers[currentQuestionIndex] !== null;
-    const activeSelection = isConfirmed ? userAnswers[currentQuestionIndex] : tempUserAnswers[currentQuestionIndex];
+    const activeSelection = isConfirmed
+        ? userAnswers[currentQuestionIndex]
+        : tempUserAnswers[currentQuestionIndex];
 
-    document.getElementById('progress-text').textContent = `${currentQuestionIndex + 1}/${questions.length}`;
-    document.getElementById('progress-fill').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+    document.getElementById('progress-text').textContent =
+        `${currentQuestionIndex + 1}/${questions.length}`;
+    document.getElementById('progress-fill').style.width =
+        `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
 
     let html = `
         <div class="question-text">
             <span style="font-size: 14px; color: var(--text-light); display: block; margin-bottom: 10px;">Pregunta ${currentQuestionIndex + 1}:</span>
-            ${q.question}
+            ${escBr(q.question)}
         </div>
         <ul class="options-list">
     `;
@@ -339,9 +237,7 @@ function renderQuestion() {
         let optionClass = 'option-item';
 
         if (quizMode === 'review') {
-            if (opt.isCorrect) {
-                optionClass += ' selected-practice';
-            }
+            if (opt.isCorrect) optionClass += ' selected-practice';
         } else {
             if (activeSelection === index) {
                 if (isConfirmed) {
@@ -361,7 +257,7 @@ function renderQuestion() {
         html += `
             <li class="${optionClass}" ${quizMode !== 'review' ? `onclick="selectOption(${index})"` : ''}>
                 <div class="option-radio"></div>
-                <div class="option-text">${opt.text}</div>
+                <div class="option-text">${escBr(opt.text)}</div>
             </li>
         `;
     });
@@ -396,23 +292,22 @@ function renderQuestion() {
         const explanationDiv = document.getElementById('feedback-explanation');
         const referenceDiv = document.getElementById('feedback-reference');
 
-        const correctOpt = q.options.find(o => o.isCorrect);
+        const correctOpt = q.options.find((o) => o.isCorrect);
 
         header.classList.remove('incorrect');
         title.textContent = 'Respuesta';
-        correctAnswerDiv.innerHTML = `<strong>${correctOpt ? correctOpt.text : ''}</strong>`;
-        explanationDiv.innerHTML = `<strong>${explanationLabel}</strong><br>${q.explanation}`;
+        correctAnswerDiv.innerHTML = `<strong>${escBr(correctOpt ? correctOpt.text : '')}</strong>`;
+        explanationDiv.innerHTML = `<strong>${esc(explanationLabel)}</strong><br>${escBr(q.explanation)}`;
 
         if (q.reference && q.reference.trim()) {
             referenceDiv.style.display = 'block';
-            referenceDiv.innerHTML = `<strong>Referencia:</strong> ${q.reference}`;
+            referenceDiv.innerHTML = `<strong>Referencia:</strong> ${escBr(q.reference)}`;
         } else {
             referenceDiv.style.display = 'none';
         }
 
         selectBtn.style.display = 'none';
         nextBtn.disabled = false;
-
     } else {
         selectBtn.style.display = 'inline-block';
         if (quizMode === 'practice' && isConfirmed) {
@@ -425,16 +320,15 @@ function renderQuestion() {
             selectBtn.disabled = true;
             nextBtn.disabled = false;
         } else {
-            selectBtn.disabled = (activeSelection === null);
+            selectBtn.disabled = activeSelection === null;
             nextBtn.disabled = true;
         }
     }
 
-    if (currentQuestionIndex === questions.length - 1) {
-        nextBtn.textContent = 'Finalizar prueba';
-    } else {
-        nextBtn.textContent = 'Siguiente pregunta →';
-    }
+    nextBtn.textContent =
+        currentQuestionIndex === questions.length - 1
+            ? 'Finalizar prueba'
+            : 'Siguiente pregunta →';
 }
 
 function selectOption(optionIndex) {
@@ -453,11 +347,12 @@ function confirmSelection() {
     renderQuestion();
 }
 
+// --- FEEDBACK (Bug #1: escBr) ---
 function showFeedback() {
     const q = questions[currentQuestionIndex];
     const selectedIndex = userAnswers[currentQuestionIndex];
     const selectedOpt = q.options[selectedIndex];
-    const correctOpt = q.options.find(o => o.isCorrect);
+    const correctOpt = q.options.find((o) => o.isCorrect);
     const explanationLabel = q.explanationLabel || 'Explicación';
 
     const container = document.getElementById('feedback-container');
@@ -472,18 +367,18 @@ function showFeedback() {
     if (selectedOpt.isCorrect) {
         header.classList.remove('incorrect');
         title.textContent = 'Respuesta correcta';
-        correctAnswerDiv.innerHTML = `<strong>${correctOpt.text}</strong>`;
+        correctAnswerDiv.innerHTML = `<strong>${escBr(correctOpt.text)}</strong>`;
     } else {
         header.classList.add('incorrect');
         title.textContent = 'Respuesta incorrecta';
-        correctAnswerDiv.innerHTML = `<strong>La respuesta correcta es:</strong><br>${correctOpt.text}`;
+        correctAnswerDiv.innerHTML = `<strong>La respuesta correcta es:</strong><br>${escBr(correctOpt.text)}`;
     }
 
-    explanationDiv.innerHTML = `<strong>${explanationLabel}</strong><br>${q.explanation}`;
+    explanationDiv.innerHTML = `<strong>${esc(explanationLabel)}</strong><br>${escBr(q.explanation)}`;
 
     if (q.reference && q.reference.trim()) {
         referenceDiv.style.display = 'block';
-        referenceDiv.innerHTML = `<strong>Referencia:</strong> ${q.reference}`;
+        referenceDiv.innerHTML = `<strong>Referencia:</strong> ${escBr(q.reference)}`;
     } else {
         referenceDiv.style.display = 'none';
     }
@@ -507,11 +402,11 @@ function nextQuestion() {
 
 function finishQuiz() {
     if (quizMode === 'exam') {
-        const unanswered = userAnswers.filter(a => a === null).length;
+        const unanswered = userAnswers.filter((a) => a === null).length;
         if (unanswered > 0) {
-            if (!confirm(`Tienes ${unanswered} preguntas sin responder o sin confirmar. ¿Estás seguro de que quieres finalizar?`)) {
-                return;
-            }
+            if (!confirm(
+                `Tienes ${unanswered} preguntas sin responder o sin confirmar. ¿Seguro que quieres finalizar?`
+            )) return;
         }
     }
 
@@ -520,7 +415,8 @@ function finishQuiz() {
 
     if (quizMode === 'review') {
         document.getElementById('final-score').textContent = '100%';
-        document.getElementById('score-text').textContent = `Has completado el repaso de las ${questions.length} preguntas.`;
+        document.getElementById('score-text').textContent =
+            `Has completado el repaso de las ${questions.length} preguntas.`;
     } else {
         let correctCount = 0;
         questions.forEach((q, index) => {
@@ -531,13 +427,15 @@ function finishQuiz() {
 
         const scorePercentage = Math.round((correctCount / questions.length) * 100);
         document.getElementById('final-score').textContent = `${scorePercentage}%`;
-        document.getElementById('score-text').textContent = `Has acertado ${correctCount} de ${questions.length} preguntas.`;
+        document.getElementById('score-text').textContent =
+            `Has acertado ${correctCount} de ${questions.length} preguntas.`;
     }
 
     reviewPage = 1;
     renderReviewPage();
 }
 
+// --- REVISIÓN (Bug #1: escBr) ---
 function renderReviewPage() {
     const reviewList = document.getElementById('review-list');
     reviewList.innerHTML = '';
@@ -549,7 +447,7 @@ function renderReviewPage() {
         const q = questions[i];
         const selectedIndex = userAnswers[i];
         const selectedOpt = selectedIndex !== null ? q.options[selectedIndex] : null;
-        const correctOpt = q.options.find(o => o.isCorrect);
+        const correctOpt = q.options.find((o) => o.isCorrect);
         const explanationLabel = q.explanationLabel || 'Explicación';
 
         const isCorrect = quizMode === 'review' ? true : (selectedOpt && selectedOpt.isCorrect);
@@ -561,11 +459,11 @@ function renderReviewPage() {
 
         if (quizMode === 'review') {
             answerHtml = `<div class="review-answer correct">
-                <strong>Respuesta:</strong> ${correctOpt ? correctOpt.text : ''}
+                <strong>Respuesta:</strong> ${escBr(correctOpt ? correctOpt.text : '')}
             </div>`;
         } else if (selectedOpt) {
             answerHtml = `<div class="review-answer ${isCorrect ? 'correct' : 'incorrect'}">
-                <strong>Tu respuesta:</strong> ${selectedOpt.text}
+                <strong>Tu respuesta:</strong> ${escBr(selectedOpt.text)}
             </div>`;
         } else {
             answerHtml = `<div class="review-answer incorrect"><strong>Tu respuesta:</strong> No respondida</div>`;
@@ -573,19 +471,19 @@ function renderReviewPage() {
 
         if (!isCorrect && quizMode !== 'review') {
             answerHtml += `<div class="review-answer correct">
-                <strong>Respuesta correcta:</strong> ${correctOpt ? correctOpt.text : ''}
+                <strong>Respuesta correcta:</strong> ${escBr(correctOpt ? correctOpt.text : '')}
             </div>`;
         }
 
         const referenceHtml = (q.reference && q.reference.trim())
-            ? `<div class="review-reference"><strong>Referencia:</strong> ${q.reference}</div>`
+            ? `<div class="review-reference"><strong>Referencia:</strong> ${escBr(q.reference)}</div>`
             : '';
 
         div.innerHTML = `
-            <div class="review-question">Pregunta ${i + 1}: ${q.question}</div>
+            <div class="review-question">Pregunta ${i + 1}: ${escBr(q.question)}</div>
             ${answerHtml}
             <div class="review-answer" style="margin-top: 10px; color: var(--text-light);">
-                <strong>${explanationLabel}:</strong> ${q.explanation}
+                <strong>${esc(explanationLabel)}:</strong> ${escBr(q.explanation)}
             </div>
             ${referenceHtml}
         `;
