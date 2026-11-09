@@ -168,6 +168,53 @@ body > * {
 }
 
 /* ============================================================
+   NUEVO: CHECKBOX CONFIRMACIÓN MANUAL
+   ============================================================ */
+.check-confirm {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.check-confirm input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    border-radius: 5px;
+    border: 1.5px solid rgba(255,255,255,.25);
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+    transition: background .18s, border-color .18s;
+}
+
+.check-confirm input:checked {
+    background: var(--spring);
+    border-color: var(--spring);
+}
+
+.check-confirm input:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1.5px;
+    width: 5px;
+    height: 10px;
+    border: solid #08130a;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(42deg);
+}
+
+/* ============================================================
    BOTONES
    ============================================================ */
 button {

@@ -41,7 +41,8 @@ let currentQuestionIndex = 0;
 let userAnswers = [];
 let tempUserAnswers = [];
 let quizMode = 'practice';
-let questionsSource = null; // 'file' | 'default' | null (Bug #4)
+let questionsSource = null;        // 'file' | 'default' | null (Bug #4)
+let manualConfirm = false;         // NUEVO: toggle de confirmación manual
 
 let reviewPage = 1;
 const itemsPerPage = 5;
@@ -80,29 +81,38 @@ function shuffleArray(array) {
     return array;
 }
 
+// NUEVO: refleja el modo actual (auto/manual) en el indicador
 function updateModeIndicator() {
     const el = document.getElementById('mode-indicator');
+    let baseText = '';
+
     if (quizMode === 'practice') {
-        el.textContent = 'Modo de práctica (beta)';
+        baseText = 'Modo de práctica (beta)' + (manualConfirm ? ' · manual' : ' · auto');
         el.style.backgroundColor = '#eceb98';
         el.style.color = '#3d3c0a';
     } else if (quizMode === 'review') {
-        el.textContent = 'Modo Repaso';
+        baseText = 'Modo Repaso';
         el.style.backgroundColor = 'rgba(248,152,32,.15)';
         el.style.color = 'var(--java-2)';
     } else {
-        el.textContent = 'Modo de examen';
+        baseText = 'Modo de examen · manual';
         el.style.backgroundColor = '#e6f4ea';
         el.style.color = '#1e6055';
     }
+
     if (questionsSource === 'default') {
-        el.textContent += ' · banco de ejemplo';
+        baseText += ' · banco de ejemplo';
     }
+
+    el.textContent = baseText;
 }
 
 // --- INICIO DEL QUIZ ---
 function startQuiz(mode) {
     quizMode = mode;
+
+    // NUEVO: leer el toggle de confirmación manual
+    manualConfirm = document.getElementById('manual-confirm').checked;
 
     // Bug #4: avisar antes de usar el banco de ejemplo
     if (questions.length === 0) {
@@ -199,7 +209,6 @@ function renderSidebar() {
             }
         }
 
-        // En sidebar usamos esc (sin <br>) porque tiene white-space: nowrap.
         li.innerHTML = `
             ${statusIcon}
             <div>
@@ -285,6 +294,7 @@ function renderQuestion() {
     const explanationLabel = q.explanationLabel || 'Explicación';
 
     if (quizMode === 'review') {
+        // --- MODO REPASO: sin botón de confirmar ---
         feedbackContainer.style.display = 'block';
         const header = document.getElementById('feedback-header');
         const title = document.getElementById('feedback-title');
@@ -309,18 +319,32 @@ function renderQuestion() {
         selectBtn.style.display = 'none';
         nextBtn.disabled = false;
     } else {
-        selectBtn.style.display = 'inline-block';
+        // --- PRÁCTICA / EXAMEN ---
         if (quizMode === 'practice' && isConfirmed) {
             showFeedback();
         } else {
             feedbackContainer.style.display = 'none';
         }
 
+        // NUEVO: lógica del botón "Confirmar respuesta" según modo
+        // - Auto (práctica y toggle OFF): sin botón, feedback al hacer clic en opción.
+        // - Manual (examen siempre, práctica si toggle ON): botón visible.
+        const autoMode = (quizMode === 'practice' && !manualConfirm);
+
         if (isConfirmed) {
+            // Ya respondida (auto o manual): ocultar "Confirmar", habilitar "Siguiente"
+            selectBtn.style.display = 'none';
             selectBtn.disabled = true;
             nextBtn.disabled = false;
+        } else if (autoMode) {
+            // Auto, aún sin seleccionar: sin botón, "Siguiente" bloqueado
+            selectBtn.style.display = 'none';
+            selectBtn.disabled = true;
+            nextBtn.disabled = true;
         } else {
-            selectBtn.disabled = activeSelection === null;
+            // Manual, aún sin confirmar: mostrar "Confirmar respuesta"
+            selectBtn.style.display = 'inline-block';
+            selectBtn.disabled = (activeSelection === null);
             nextBtn.disabled = true;
         }
     }
@@ -334,8 +358,18 @@ function renderQuestion() {
 function selectOption(optionIndex) {
     if (quizMode === 'review') return;
     if (userAnswers[currentQuestionIndex] !== null) return;
-    tempUserAnswers[currentQuestionIndex] = optionIndex;
-    renderQuestion();
+
+    // NUEVO: en práctica auto, al hacer clic se confirma inmediatamente
+    const autoConfirm = (quizMode === 'practice' && !manualConfirm);
+
+    if (autoConfirm) {
+        userAnswers[currentQuestionIndex] = optionIndex;
+        renderSidebar();
+        renderQuestion();
+    } else {
+        tempUserAnswers[currentQuestionIndex] = optionIndex;
+        renderQuestion();
+    }
 }
 
 function confirmSelection() {
@@ -386,7 +420,7 @@ function showFeedback() {
 
 function nextQuestion() {
     if (quizMode !== 'review' && userAnswers[currentQuestionIndex] === null) {
-        alert("Por favor, selecciona una respuesta y haz clic en el botón 'Seleccionar' antes de continuar.");
+        alert("Por favor, selecciona una respuesta y confírmala antes de continuar.");
         return;
     }
 

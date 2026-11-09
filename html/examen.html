@@ -34,7 +34,13 @@
                 <input type="file" id="file-upload" accept=".txt">
             </div>
 
-            <div class="btn-container" style="margin-top: 30px;">
+            <!-- NUEVO: toggle confirmación manual (afecta solo a práctica) -->
+            <label class="check-confirm" for="manual-confirm">
+                <input type="checkbox" id="manual-confirm">
+                Confirmación manual en práctica (desactivado = feedback inmediato)
+            </label>
+
+            <div class="btn-container" style="margin-top: 22px;">
                 <button class="btn-outline" onclick="startQuiz('practice')">Modo de práctica</button>
                 <button class="btn-outline" onclick="startQuiz('review')">Modo Repaso</button>
                 <button class="btn-primary" onclick="startQuiz('exam')">Modo de examen</button>
@@ -69,7 +75,8 @@
                 </div>
 
                 <div class="bottom-bar">
-                    <button class="btn-outline" id="select-btn" onclick="confirmSelection()">Seleccionar</button>
+                    <!-- Renombrado: "Seleccionar" → "Confirmar respuesta" -->
+                    <button class="btn-outline" id="select-btn" onclick="confirmSelection()">Confirmar respuesta</button>
                     <button class="btn-primary" id="next-btn" onclick="nextQuestion()">Siguiente pregunta &rarr;</button>
                 </div>
             </div>
