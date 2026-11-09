@@ -3,23 +3,20 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const screenUpload = $('screen-upload');
-  const screenMode   = $('screen-mode');
+  // Pantallas
+  const screenSetup  = $('screen-setup');
   const screenStudy  = $('screen-study');
   const screenRepaso = $('screen-repaso');
   const screenDone   = $('screen-done');
 
-  const dropzone   = $('dropzone');
-  const fileInput  = $('fileInput');
-  const fileInfo   = $('fileInfo');
-  const startBtn   = $('startBtn');
-  const dedupeChk  = $('dedupe');
+  // Setup (subida + modos)
+  const fileInput     = $('fileInput');
+  const fileInfo      = $('fileInfo');
+  const dedupeChk     = $('dedupe');
+  const modeRepasoBtn = $('modeRepaso');
+  const modeFlashBtn  = $('modeFlashcards');
 
-  const modeCount      = $('modeCount');
-  const modeRepasoBtn  = $('modeRepaso');
-  const modeFlashBtn   = $('modeFlashcards');
-  const backToUploadBtn = $('backToUploadBtn');
-
+  // Repaso
   const repasoCounter  = $('repasoCounter');
   const repasoProgress = $('repasoProgress');
   const repasoQuestion = $('repasoQuestion');
@@ -27,6 +24,7 @@
   const repasoPrevBtn  = $('repasoPrevBtn');
   const repasoNextBtn  = $('repasoNextBtn');
 
+  // Flashcards
   const cardEl      = $('card');
   const cardScene   = $('cardScene');
   const questionEl  = $('questionText');
@@ -44,6 +42,7 @@
   const statBad      = $('statBad');
   const progressFill = $('progressFill');
 
+  // Fin
   const doneSubtitle = $('doneSubtitle');
   const doneStats    = $('doneStats');
   const restartBtn   = $('restartBtn');
@@ -76,8 +75,7 @@
   };
 
   const showScreen = (name) => {
-    screenUpload.hidden = name !== 'upload';
-    screenMode.hidden   = name !== 'mode';
+    screenSetup.hidden  = name !== 'setup';
     screenStudy.hidden  = name !== 'study';
     screenRepaso.hidden = name !== 'repaso';
     screenDone.hidden   = name !== 'done';
@@ -90,8 +88,12 @@
     return m > 0 ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
   };
 
-  // Bug #7: usamos el helper compartido
   const escapeHtml = Parser.escapeHtml;
+
+  function setModeButtonsEnabled(enabled) {
+    modeRepasoBtn.disabled = !enabled;
+    modeFlashBtn.disabled  = !enabled;
+  }
 
   function renderAnswerHtml(card) {
     let html = '';
@@ -119,6 +121,7 @@
     return html;
   }
 
+  /* ---------- CARGA DE ARCHIVO ---------- */
   async function loadFile(file) {
     if (!file) return;
 
@@ -126,8 +129,8 @@
       fileInfo.hidden = false;
       fileInfo.className = 'file-info err';
       fileInfo.textContent = 'El archivo debe ser un .txt de texto plano.';
-      startBtn.disabled = true;
       S.parsed = [];
+      setModeButtonsEnabled(false);
       return;
     }
 
@@ -138,11 +141,10 @@
       fileInfo.hidden = false;
       fileInfo.className = 'file-info err';
       fileInfo.textContent = 'No se pudo leer el archivo.';
-      startBtn.disabled = true;
+      setModeButtonsEnabled(false);
       return;
     }
 
-    // Bug #7: parser compartido
     const cards = Parser.parseText(content);
     S.parsed = cards;
 
@@ -153,7 +155,7 @@
       fileInfo.innerHTML =
         '<div><div class="fi-name">' + escapeHtml(file.name) + '</div>' +
         '<div class="fi-meta">No se encontró ninguna pareja válida <b>pregunta:</b> / <b>respuesta:</b></div></div>';
-      startBtn.disabled = true;
+      setModeButtonsEnabled(false);
       return;
     }
 
@@ -164,38 +166,15 @@
       '<div class="fi-meta">' + sizeKb + ' KB</div></div>' +
       '<div class="fi-count">' + cards.length + ' tarjeta' + (cards.length === 1 ? '' : 's') + '</div>';
 
-    startBtn.disabled = false;
+    setModeButtonsEnabled(true);
   }
 
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     loadFile(file);
-    fileInput.value = '';
   });
 
-  ['dragenter', 'dragover'].forEach((ev) =>
-    dropzone.addEventListener(ev, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropzone.classList.add('drag');
-    })
-  );
-
-  ['dragleave', 'drop'].forEach((ev) =>
-    dropzone.addEventListener(ev, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropzone.classList.remove('drag');
-    })
-  );
-
-  dropzone.addEventListener('drop', (e) => {
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) loadFile(file);
-  });
-
-  ['dragover', 'drop'].forEach((ev) =>
-    window.addEventListener(ev, (e) => e.preventDefault())
-  );
-
+  /* ---------- CONSTRUIR TARJETAS ---------- */
   function buildCards() {
     let cards = S.parsed.map((c) => ({
       question: c.question,
@@ -216,21 +195,16 @@
     return cards;
   }
 
-  startBtn.addEventListener('click', () => {
-    const cards = buildCards();
-    if (!cards.length) return;
-    modeCount.textContent = cards.length;
-    showScreen('mode');
-  });
-
-  backToUploadBtn.addEventListener('click', () => showScreen('upload'));
-
+  /* ---------- LANZAR SESIÓN ---------- */
   modeRepasoBtn.addEventListener('click', () => startSession('repaso'));
   modeFlashBtn.addEventListener('click',  () => startSession('flashcards'));
 
   function startSession(mode) {
     const base = buildCards();
-    if (!base.length) return;
+    if (!base.length) {
+      alert('No hay tarjetas cargadas. Sube un archivo .txt primero.');
+      return;
+    }
 
     S.mode = mode;
     S.startTime = Date.now();
@@ -268,6 +242,7 @@
     }
   }
 
+  /* ---------- MODO REPASO ---------- */
   function renderRepaso() {
     const card = S.repasoCards[S.repasoIndex];
     repasoQuestion.textContent = card.question;
@@ -300,6 +275,7 @@
     }
   });
 
+  /* ---------- MODO FLASHCARDS ---------- */
   function requeue(idx) {
     const q = S.queue;
     if (q.length === 0) { q.push(idx); return; }
@@ -365,7 +341,6 @@
   revealBtn.addEventListener('click', reveal);
   cardScene.addEventListener('click', () => { if (!S.revealed) reveal(); });
 
-  // Bug #6: setTimeout de respaldo + limpieza al vuelo
   function flash(kind) {
     cardScene.classList.remove('flash-ok', 'flash-bad');
     void cardScene.offsetWidth;
@@ -434,6 +409,7 @@
     }
   });
 
+  /* ---------- FIN DE SESIÓN ---------- */
   function finishSession() {
     const elapsed = Date.now() - S.startTime;
 
@@ -457,10 +433,9 @@
   restartBtn.addEventListener('click', () => startSession(S.mode));
 
   newFileBtn.addEventListener('click', () => {
-    showScreen('upload');
-    fileInfo.hidden = true;
-    startBtn.disabled = S.parsed.length === 0;
+    showScreen('setup');
+    setModeButtonsEnabled(S.parsed.length > 0);
   });
 
-  showScreen('upload');
+  showScreen('setup');
 })();
